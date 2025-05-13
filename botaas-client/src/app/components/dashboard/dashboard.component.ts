@@ -7,7 +7,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgIf } from '@angular/common';
 
 @Component({
   selector: 'app-dashboard',
@@ -20,7 +20,8 @@ import { DatePipe } from '@angular/common';
     MatButtonModule,
     MatListModule,
     MatProgressSpinnerModule,
-    DatePipe
+    DatePipe,
+    NgIf
   ]
 })
 export class DashboardComponent implements OnInit {

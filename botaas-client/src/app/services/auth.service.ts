@@ -4,6 +4,7 @@ import { Observable, BehaviorSubject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { isPlatformBrowser } from '@angular/common';
+import { TokenStorageService } from './token-storage.service';
 
 interface User {
   id: number;
@@ -36,6 +37,7 @@ export class AuthService {
 
   constructor(
     private http: HttpClient,
+    private tokenStorage: TokenStorageService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.loadUserFromToken();
@@ -52,11 +54,7 @@ export class AuthService {
     return this.http.post<TokenResponse>(`${this.API_URL}/auth/telegram-login/`, authData)
       .pipe(
         tap(response => {
-          const storage = this.getStorage();
-          if (storage) {
-            storage.setItem('token', response.access_token);
-            storage.setItem('token_type', response.token_type);
-          }
+          this.tokenStorage.setToken(response.access_token);
           this.loadUserInfo();
         })
       );
@@ -72,24 +70,16 @@ export class AuthService {
   }
 
   isLoggedIn(): boolean {
-    const storage = this.getStorage();
-    if (!storage) return false;
-    
-    const token = storage.getItem('token');
+    const token = this.tokenStorage.getToken();
     return !!token && !this.jwtHelper.isTokenExpired(token);
   }
 
   getToken(): string | null {
-    const storage = this.getStorage();
-    return storage ? storage.getItem('token') : null;
+    return this.tokenStorage.getToken();
   }
 
   logout(): void {
-    const storage = this.getStorage();
-    if (storage) {
-      storage.removeItem('token');
-      storage.removeItem('token_type');
-    }
+    this.tokenStorage.removeToken();
     this.currentUserSubject.next(null);
   }
 
