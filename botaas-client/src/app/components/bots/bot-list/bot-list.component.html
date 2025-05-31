@@ -1,0 +1,118 @@
+<div class="bot-list-container">
+    <!-- Header -->
+    <div class="header">
+        <h1>My Telegram Bots</h1>
+        <button mat-raised-button color="primary" (click)="addNewBot()">
+            <mat-icon>add</mat-icon>
+            Add New Bot
+        </button>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-container">
+        <mat-spinner></mat-spinner>
+        <p>Loading your bots...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !loading" class="error-container">
+        <mat-icon color="warn">error</mat-icon>
+        <p>{{ error }}</p>
+        <button mat-button color="primary" (click)="loadBots()">Try Again</button>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && !error && bots.length === 0" class="empty-state">
+        <mat-icon>smart_toy</mat-icon>
+        <h2>No bots yet</h2>
+        <p>Get started by adding your first Telegram bot</p>
+        <button mat-raised-button color="primary" (click)="addNewBot()">
+            <mat-icon>add</mat-icon>
+            Add Your First Bot
+        </button>
+    </div>
+
+    <!-- Bot Cards -->
+    <div *ngIf="!loading && !error && bots.length > 0" class="bots-grid">
+        <mat-card *ngFor="let bot of bots" class="bot-card">
+            <mat-card-header>
+                <div mat-card-avatar class="bot-avatar">
+                    <mat-icon>smart_toy</mat-icon>
+                </div>
+                <mat-card-title>{{ bot.first_name }}</mat-card-title>
+                <mat-card-subtitle>{{ bot.username }}</mat-card-subtitle>
+
+                <!-- Menu Button -->
+                <button mat-icon-button [matMenuTriggerFor]="botMenu" class="menu-button">
+                    <mat-icon>more_vert</mat-icon>
+                </button>
+
+                <!-- Bot Menu -->
+                <mat-menu #botMenu="matMenu">
+                    <button mat-menu-item (click)="editBot(bot)">
+                        <mat-icon>edit</mat-icon>
+                        <span>Edit</span>
+                    </button>
+                    <button mat-menu-item (click)="refreshBotInfo(bot)">
+                        <mat-icon>refresh</mat-icon>
+                        <span>Refresh Info</span>
+                    </button>
+                    <button mat-menu-item (click)="deleteBot(bot)" class="delete-option">
+                        <mat-icon>delete</mat-icon>
+                        <span>Delete</span>
+                    </button>
+                </mat-menu>
+            </mat-card-header>
+
+            <mat-card-content>
+                <!-- Bot Status -->
+                <div class="bot-status">
+                    <mat-chip-set>
+                        <mat-chip [class]="bot.is_active ? 'status-active' : 'status-inactive'">
+                            <mat-icon matChipAvatar>{{ bot.is_active ? 'radio_button_checked' : 'radio_button_unchecked'
+                                }}</mat-icon>
+                            {{ bot.is_active ? 'Active' : 'Inactive' }}
+                        </mat-chip>
+                    </mat-chip-set>
+                </div>
+
+                <!-- Bot Description -->
+                <p *ngIf="bot.description" class="bot-description">{{ bot.description }}</p>
+                <p *ngIf="!bot.description" class="no-description">No description available</p>
+
+                <!-- Bot Features -->
+                <div class="bot-features">
+                    <div class="feature" *ngIf="bot.can_join_groups">
+                        <mat-icon>group</mat-icon>
+                        <span>Can join groups</span>
+                    </div>
+                    <div class="feature" *ngIf="bot.supports_inline_queries">
+                        <mat-icon>search</mat-icon>
+                        <span>Inline queries</span>
+                    </div>
+                    <div class="feature" *ngIf="bot.can_read_all_group_messages">
+                        <mat-icon>visibility</mat-icon>
+                        <span>Reads all messages</span>
+                    </div>
+                </div>
+
+                <!-- Bot Info -->
+                <div class="bot-info">
+                    <small>Bot ID: {{ bot.bot_id }}</small>
+                    <small>Created: {{ bot.created_at | date:'short' }}</small>
+                </div>
+            </mat-card-content>
+
+            <mat-card-actions>
+                <button mat-button (click)="toggleBotStatus(bot)" [color]="bot.is_active ? 'warn' : 'primary'">
+                    <mat-icon>{{ bot.is_active ? 'pause' : 'play_arrow' }}</mat-icon>
+                    {{ bot.is_active ? 'Deactivate' : 'Activate' }}
+                </button>
+                <button mat-button (click)="editBot(bot)">
+                    <mat-icon>settings</mat-icon>
+                    Settings
+                </button>
+            </mat-card-actions>
+        </mat-card>
+    </div>
+</div>

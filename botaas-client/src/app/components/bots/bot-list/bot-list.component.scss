@@ -1,0 +1,240 @@
+.bot-list-container {
+    padding: 24px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    h1 {
+        margin: 0;
+        color: #333;
+        font-weight: 500;
+    }
+
+    button {
+        mat-icon {
+            margin-right: 8px;
+        }
+    }
+}
+
+.loading-container,
+.error-container,
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 64px 24px;
+    text-align: center;
+
+    mat-icon {
+        font-size: 64px;
+        height: 64px;
+        width: 64px;
+        margin-bottom: 16px;
+        opacity: 0.6;
+    }
+
+    h2 {
+        margin: 16px 0 8px;
+        color: #666;
+    }
+
+    p {
+        color: #999;
+        margin-bottom: 24px;
+    }
+}
+
+.bots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 24px;
+}
+
+.bot-card {
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    mat-card-header {
+        .bot-avatar {
+            background-color: #3f51b5;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            mat-icon {
+                font-size: 24px;
+                height: 24px;
+                width: 24px;
+            }
+        }
+
+        .menu-button {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+        }
+    }
+
+    mat-card-content {
+        .bot-status {
+            margin-bottom: 16px;
+
+            .status-active {
+                background-color: #e8f5e8;
+                color: #2e7d32;
+
+                mat-icon {
+                    color: #4caf50;
+                }
+            }
+
+            .status-inactive {
+                background-color: #ffeaa7;
+                color: #f57f17;
+
+                mat-icon {
+                    color: #ff9800;
+                }
+            }
+        }
+
+        .bot-description {
+            color: #666;
+            margin: 16px 0;
+            line-height: 1.5;
+        }
+
+        .no-description {
+            color: #999;
+            font-style: italic;
+            margin: 16px 0;
+        }
+
+        .bot-features {
+            margin: 16px 0;
+
+            .feature {
+                display: flex;
+                align-items: center;
+                margin-bottom: 8px;
+                color: #666;
+                font-size: 0.9em;
+
+                mat-icon {
+                    margin-right: 8px;
+                    font-size: 18px;
+                    height: 18px;
+                    width: 18px;
+                    color: #2196f3;
+                }
+            }
+        }
+
+        .bot-info {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #eee;
+
+            small {
+                display: block;
+                color: #999;
+                font-size: 0.8em;
+                margin-bottom: 4px;
+            }
+        }
+    }
+
+    mat-card-actions {
+        padding: 8px 16px 16px;
+        gap: 8px;
+
+        button {
+            mat-icon {
+                margin-right: 4px;
+                font-size: 18px;
+                height: 18px;
+                width: 18px;
+            }
+        }
+    }
+}
+
+// Menu styles
+.delete-option {
+    color: #f44336;
+
+    mat-icon {
+        color: #f44336;
+    }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+    .bot-list-container {
+        padding: 16px;
+    }
+
+    .header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+
+        h1 {
+            text-align: center;
+        }
+    }
+
+    .bots-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .loading-container,
+    .error-container,
+    .empty-state {
+        padding: 32px 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .bots-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .bot-card {
+        mat-card-actions {
+            flex-direction: column;
+            align-items: stretch;
+
+            button {
+                width: 100%;
+                margin-bottom: 8px;
+            }
+        }
+    }
+}
+
+// Global snackbar styles
+:host ::ng-deep {
+    .success-snackbar {
+        background-color: #4caf50;
+        color: white;
+    }
+
+    .error-snackbar {
+        background-color: #f44336;
+        color: white;
+    }
+}
