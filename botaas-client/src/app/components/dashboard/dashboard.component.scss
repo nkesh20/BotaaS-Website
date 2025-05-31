@@ -1,28 +1,107 @@
 .dashboard-container {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
+    padding: 24px;
 }
 
-.spacer {
-    flex: 1 1 auto;
+.header {
+    margin-bottom: 24px;
+
+    h1 {
+        margin: 0;
+        color: #333;
+        font-weight: 500;
+    }
 }
 
 .content {
-    padding: 20px;
-    max-width: 800px;
+    max-width: 1200px;
     margin: 0 auto;
-    width: 100%;
 }
 
-.user-avatar {
-    background-color: #3f51b5;
+.welcome-card {
+    margin-bottom: 32px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    font-weight: bold;
+
+    mat-card-header {
+        .user-avatar {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        mat-card-title,
+        mat-card-subtitle {
+            color: white;
+        }
+
+        mat-card-subtitle {
+            opacity: 0.8;
+        }
+    }
+}
+
+.quick-actions {
+    margin-bottom: 32px;
+
+    h2 {
+        color: #333;
+        margin-bottom: 16px;
+        font-weight: 500;
+    }
+
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+    }
+
+    .action-card {
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+        &:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        mat-card-content {
+            text-align: center;
+            padding: 32px 24px;
+
+            mat-icon {
+                font-size: 48px;
+                height: 48px;
+                width: 48px;
+                color: #3f51b5;
+                margin-bottom: 16px;
+            }
+
+            h3 {
+                margin: 0 0 8px;
+                color: #333;
+                font-weight: 500;
+            }
+
+            p {
+                margin: 0;
+                color: #666;
+                font-size: 0.9em;
+                line-height: 1.4;
+            }
+        }
+    }
+}
+
+.user-info-card {
+    mat-list-item {
+        mat-icon {
+            color: #666;
+        }
+    }
 }
 
 .loading {
@@ -30,9 +109,44 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 40px;
+    padding: 64px 24px;
+    text-align: center;
+
+    mat-spinner {
+        margin-bottom: 16px;
+    }
+
+    p {
+        color: #666;
+    }
 }
 
-mat-card {
-    margin-top: 20px;
+// Responsive design
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 16px;
+    }
+
+    .quick-actions {
+        .actions-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .action-card {
+            mat-card-content {
+                padding: 24px 16px;
+
+                mat-icon {
+                    font-size: 36px;
+                    height: 36px;
+                    width: 36px;
+                }
+            }
+        }
+    }
+
+    .welcome-card {
+        margin-bottom: 24px;
+    }
 }

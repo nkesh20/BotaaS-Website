@@ -1,36 +1,68 @@
 <div class="dashboard-container">
-    <mat-toolbar color="primary">
-        <span>BotaaS Dashboard</span>
-        <span class="spacer"></span>
-        <button mat-button (click)="logout()">Logout</button>
-    </mat-toolbar>
+    <div class="header">
+        <h1>Dashboard</h1>
+    </div>
 
     <div class="content">
         <ng-container *ngIf="currentUser; else loading">
-            <mat-card>
+            <!-- Welcome Card -->
+            <mat-card class="welcome-card">
                 <mat-card-header>
                     <div mat-card-avatar class="user-avatar">
-                        {{ currentUser!.first_name.charAt(0) }}{{ currentUser!.last_name?.charAt(0) || '' }}
+                        {{ currentUser!.first_name?.charAt(0) }}{{ currentUser!.last_name?.charAt(0) || '' }}
                     </div>
-                    <mat-card-title>{{ currentUser!.first_name }} {{ currentUser!.last_name }}</mat-card-title>
+                    <mat-card-title>Welcome back, {{ currentUser!.first_name }}!</mat-card-title>
                     <mat-card-subtitle>{{ currentUser!.telegram_username }}</mat-card-subtitle>
+                </mat-card-header>
+            </mat-card>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <h2>Quick Actions</h2>
+                <div class="actions-grid">
+                    <mat-card class="action-card" (click)="navigateToBots()">
+                        <mat-card-content>
+                            <mat-icon>smart_toy</mat-icon>
+                            <h3>My Bots</h3>
+                            <p>View and manage your Telegram bots</p>
+                        </mat-card-content>
+                    </mat-card>
+
+                    <mat-card class="action-card" (click)="addNewBot()">
+                        <mat-card-content>
+                            <mat-icon>add_circle</mat-icon>
+                            <h3>Add New Bot</h3>
+                            <p>Connect a new Telegram bot to your account</p>
+                        </mat-card-content>
+                    </mat-card>
+                </div>
+            </div>
+
+            <!-- User Info Card -->
+            <mat-card class="user-info-card">
+                <mat-card-header>
+                    <mat-card-title>Account Information</mat-card-title>
                 </mat-card-header>
 
                 <mat-card-content>
                     <mat-list>
                         <mat-list-item>
+                            <mat-icon matListItemIcon>person</mat-icon>
                             <span matListItemTitle>User ID</span>
                             <span matListItemLine>{{ currentUser!.id }}</span>
                         </mat-list-item>
                         <mat-list-item>
+                            <mat-icon matListItemIcon>email</mat-icon>
                             <span matListItemTitle>Email</span>
                             <span matListItemLine>{{ currentUser!.email || 'Not provided' }}</span>
                         </mat-list-item>
                         <mat-list-item>
+                            <mat-icon matListItemIcon>telegram</mat-icon>
                             <span matListItemTitle>Telegram ID</span>
                             <span matListItemLine>{{ currentUser!.telegram_id }}</span>
                         </mat-list-item>
                         <mat-list-item>
+                            <mat-icon matListItemIcon>calendar_today</mat-icon>
                             <span matListItemTitle>Account Created</span>
                             <span matListItemLine>{{ currentUser!.created_at | date: 'medium' }}</span>
                         </mat-list-item>

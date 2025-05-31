@@ -7,10 +7,28 @@ export const routes: Routes = [
         loadComponent: () => import('./components/login/login.component').then(m => m.LoginComponent)
     },
     {
-        path: 'dashboard',
-        loadComponent: () => import('./components/dashboard/dashboard.component').then(m => m.DashboardComponent),
-        canActivate: [authGuard]
+        path: '',
+        loadComponent: () => import('./components/layout/main-layout.component').then(m => m.MainLayoutComponent),
+        canActivate: [authGuard],
+        children: [
+            {
+                path: 'dashboard',
+                loadComponent: () => import('./components/dashboard/dashboard.component').then(m => m.DashboardComponent)
+            },
+            {
+                path: 'bots',
+                loadComponent: () => import('./components/bots/bot-list/bot-list.component').then(m => m.BotListComponent)
+            },
+            {
+                path: 'bots/add',
+                loadComponent: () => import('./components/bots/bot-add/bot-add.component').then(m => m.AddBotComponent)
+            },
+            {
+                path: 'profile',
+                loadComponent: () => import('./components/dashboard/dashboard.component').then(m => m.DashboardComponent) // Reuse dashboard for now
+            },
+            { path: '', redirectTo: '/dashboard', pathMatch: 'full' }
+        ]
     },
-    { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
     { path: '**', redirectTo: '/dashboard' }
 ];
