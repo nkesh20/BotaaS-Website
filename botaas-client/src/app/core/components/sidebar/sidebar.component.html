@@ -1,1 +1,33 @@
-<p>sidebar works!</p>
+<div class="sidebar">
+    <!-- User Profile Section -->
+    <div class="user-profile" *ngIf="currentUser">
+        <div class="user-avatar">
+            {{ currentUser?.first_name?.charAt(0) }}{{ currentUser?.last_name?.charAt(0) || '' }}
+        </div>
+        <div class="user-info">
+            <div class="user-name">{{ currentUser?.first_name }} {{ currentUser?.last_name }}</div>
+            <div class="user-username">{{ currentUser?.telegram_username }}</div>
+        </div>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <!-- Navigation Menu -->
+    <mat-nav-list class="nav-list">
+        <mat-list-item *ngFor="let item of menuItems" [class.active]="isActiveRoute(item.route)"
+            (click)="navigateTo(item.route)" class="nav-item">
+            <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+            <span matListItemTitle>{{ item.label }}</span>
+        </mat-list-item>
+    </mat-nav-list>
+
+    <mat-divider></mat-divider>
+
+    <!-- Logout Button -->
+    <div class="sidebar-footer">
+        <button mat-button class="logout-btn" (click)="logout()">
+            <mat-icon>logout</mat-icon>
+            <span>Logout</span>
+        </button>
+    </div>
+</div>

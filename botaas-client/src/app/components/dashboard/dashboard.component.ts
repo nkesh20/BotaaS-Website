@@ -3,11 +3,11 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user.model';
 import { MatCardModule } from '@angular/material/card';
-import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { DatePipe, NgIf } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
+import { DatePipe, NgFor, NgIf } from '@angular/common';
 
 @Component({
   selector: 'app-dashboard',
@@ -16,12 +16,13 @@ import { DatePipe, NgIf } from '@angular/common';
   standalone: true,
   imports: [
     MatCardModule,
-    MatToolbarModule,
     MatButtonModule,
     MatListModule,
     MatProgressSpinnerModule,
+    MatIconModule,
     DatePipe,
-    NgIf
+    NgIf,
+    NgFor
   ]
 })
 export class DashboardComponent implements OnInit {
@@ -50,8 +51,11 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/login']);
+  navigateToBots(): void {
+    this.router.navigate(['/bots']);
+  }
+
+  addNewBot(): void {
+    this.router.navigate(['/bots/add']);
   }
 }
