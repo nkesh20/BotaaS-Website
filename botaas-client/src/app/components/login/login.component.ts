@@ -80,7 +80,6 @@ export class LoginComponent implements AfterViewInit {
         this.router.navigate(['/dashboard']);
       },
       error: (error) => {
-        console.error('Login error:', error);
         this.errorMessage = 'Authentication failed. Please try again.';
       }
     });

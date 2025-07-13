@@ -191,7 +191,6 @@ export class BotEditorComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error loading bot:', error);
-          // TODO: Show error message to user
         }
       });
     }
@@ -208,7 +207,6 @@ export class BotEditorComponent implements OnInit {
           },
           error: (error) => {
             console.error('Error updating bot:', error);
-            // TODO: Show error message to user
           }
         });
       } else {
@@ -222,7 +220,6 @@ export class BotEditorComponent implements OnInit {
           },
           error: (error) => {
             console.error('Error creating bot:', error);
-            // TODO: Show error message to user
           }
         });
       }
@@ -244,7 +241,6 @@ export class BotEditorComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error refreshing bot:', error);
-          // TODO: Show error message to user
         }
       });
     }
@@ -258,7 +254,6 @@ export class BotEditorComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error toggling bot status:', error);
-          // TODO: Show error message to user
         }
       });
     }
