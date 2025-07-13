@@ -10,7 +10,7 @@ import { environment } from '../../../environments/environment';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
   standalone: true,
-  imports: [MatCardModule, NgIf]
+  imports: [MatCardModule]
 })
 export class LoginComponent implements AfterViewInit {
   @ViewChild('telegramLoginWidget') telegramLoginWidget!: ElementRef;

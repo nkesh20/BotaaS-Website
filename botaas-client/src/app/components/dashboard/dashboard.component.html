@@ -9,7 +9,7 @@
             <mat-card class="welcome-card">
                 <mat-card-header>
                     <div mat-card-avatar class="user-avatar">
-                        {{ currentUser!.first_name?.charAt(0) }}{{ currentUser!.last_name?.charAt(0) || '' }}
+                        {{ currentUser!.first_name.charAt(0) }}{{ currentUser!.last_name?.charAt(0) || '' }}
                     </div>
                     <mat-card-title>Welcome back, {{ currentUser!.first_name }}!</mat-card-title>
                     <mat-card-subtitle>{{ currentUser!.telegram_username }}</mat-card-subtitle>

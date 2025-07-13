@@ -2,11 +2,11 @@
     <!-- User Profile Section -->
     <div class="user-profile" *ngIf="currentUser">
         <div class="user-avatar">
-            {{ currentUser?.first_name?.charAt(0) }}{{ currentUser?.last_name?.charAt(0) || '' }}
+            {{ currentUser.first_name.charAt(0) }}{{ currentUser.last_name?.charAt(0) || '' }}
         </div>
         <div class="user-info">
-            <div class="user-name">{{ currentUser?.first_name }} {{ currentUser?.last_name }}</div>
-            <div class="user-username">{{ currentUser?.telegram_username }}</div>
+            <div class="user-name">{{ currentUser.first_name }} {{ currentUser.last_name }}</div>
+            <div class="user-username">{{ currentUser.telegram_username }}</div>
         </div>
     </div>
 

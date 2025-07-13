@@ -40,6 +40,10 @@ interface SimpleEdge {
   template: `
     <div class="flow-builder">
       <mat-toolbar class="toolbar">
+        <button mat-button (click)="backToFlows()" class="back-button">
+          <mat-icon>arrow_back</mat-icon>
+          Back to Flows
+        </button>
         <span>Flow Builder</span>
         <div class="toolbar-spacer"></div>
         <button mat-button (click)="addNode()">
@@ -58,7 +62,11 @@ interface SimpleEdge {
           <mat-icon>save</mat-icon>
           Save Flow
         </button>
-        <button mat-button (click)="refreshFlow()" *ngIf="route.snapshot.params['flowId']">
+        <button mat-button color="accent" (click)="setAsDefault()" *ngIf="route.snapshot.params['flowId'] && route.snapshot.params['flowId'] !== 'new'">
+          <mat-icon>star</mat-icon>
+          Set as Default
+        </button>
+        <button mat-button (click)="refreshFlow()" *ngIf="route.snapshot.params['flowId'] && route.snapshot.params['flowId'] !== 'new'">
           <mat-icon>refresh</mat-icon>
           Refresh
         </button>
@@ -170,6 +178,10 @@ interface SimpleEdge {
       border-bottom: 1px solid #ddd;
       flex-shrink: 0;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .back-button {
+      margin-right: 16px;
     }
 
     .toolbar-spacer {
@@ -360,7 +372,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
 
     console.log('Route params:', { botId, flowId });
 
-    if (flowId) {
+    if (flowId && flowId !== 'new') {
       this.loadFlow(botId, flowId);
     } else {
       this.initializeDefaultFlow();
@@ -606,7 +618,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     const botId = parseInt(this.route.snapshot.params['botId']);
     const flowId = this.route.snapshot.params['flowId'];
     
-    if (botId && flowId) {
+    if (botId && flowId && flowId !== 'new') {
       console.log('Manually refreshing flow...');
       this.loadFlow(botId, parseInt(flowId));
     }
@@ -715,7 +727,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
 
     console.log('Flow data to save:', flowData);
 
-    if (flowId) {
+    if (flowId && flowId !== 'new') {
       console.log('=== CALLING UPDATE FLOW ===');
       this.botService.updateFlow(botId, parseInt(flowId), flowData).subscribe({
         next: (response) => {
@@ -751,5 +763,30 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     }
 
     console.log('=== SAVE FLOW METHOD END ===');
+  }
+
+  setAsDefault() {
+    const botId = parseInt(this.route.snapshot.params['botId']);
+    const flowId = this.route.snapshot.params['flowId'];
+    
+    if (!flowId || flowId === 'new') {
+      this.snackBar.open('Please save the flow first', 'Close', { duration: 3000 });
+      return;
+    }
+
+    this.botService.setFlowAsDefault(botId, parseInt(flowId)).subscribe({
+      next: (result) => {
+        this.snackBar.open('Flow set as default successfully', 'Close', { duration: 3000 });
+      },
+      error: (error) => {
+        console.error('Error setting flow as default:', error);
+        this.snackBar.open('Failed to set flow as default', 'Close', { duration: 3000 });
+      }
+    });
+  }
+
+  backToFlows() {
+    const botId = this.route.snapshot.params['botId'];
+    this.router.navigate(['/bots', botId, 'flows']);
   }
 }

@@ -29,6 +29,10 @@ export const routes: Routes = [
             },
             {
                 path: 'bots/:botId/flows',
+                loadComponent: () => import('./features/bot-management/components/flow-list/flow-list.component').then(m => m.FlowListComponent)
+            },
+            {
+                path: 'bots/:botId/flows/new',
                 loadComponent: () => import('./features/bot-management/components/flow-builder/flow-builder.component').then(m => m.FlowBuilderComponent)
             },
             {

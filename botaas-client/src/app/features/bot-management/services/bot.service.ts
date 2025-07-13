@@ -169,6 +169,12 @@ export class BotService {
     return this.http.post<any>(url, {});
   }
 
+  setFlowAsDefault(botId: number, flowId: number): Observable<any> {
+    const url = `${this.apiUrl}/flows/${botId}/${flowId}/set-default`;
+    console.log('Setting flow as default at:', url);
+    return this.http.post<any>(url, {});
+  }
+
   executeFlow(botId: number, flowId: number, message: string, userId: string, sessionId?: string): Observable<any> {
     const url = `${this.apiUrl}/flows/${botId}/${flowId}/execute`;
     const payload = {
