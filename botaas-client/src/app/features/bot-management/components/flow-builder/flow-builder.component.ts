@@ -10,6 +10,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { BotService } from '../../services/bot.service';
 import { NodeEditorComponent } from '../node-editor/node-editor.component';
+import { EdgeEditorComponent } from '../edge-editor/edge-editor.component';
 
 interface SimpleNode {
   id: string;
@@ -24,6 +25,7 @@ interface SimpleEdge {
   source: string;
   target: string;
   label?: string;
+  condition?: string;
 }
 
 @Component({
@@ -57,6 +59,10 @@ interface SimpleEdge {
         <button mat-button (click)="deleteSelectedNode()" [disabled]="!selectedNode">
           <mat-icon>delete</mat-icon>
           Delete Node
+        </button>
+        <button mat-button (click)="showEdgeEditingHelp()" color="accent">
+          <mat-icon>help</mat-icon>
+          Edge Labels Help
         </button>
         <button mat-raised-button color="primary" (click)="saveFlow()">
           <mat-icon>save</mat-icon>
@@ -93,6 +99,7 @@ interface SimpleEdge {
         </div>
         <button mat-button (click)="addTestNodes()">Add Test Nodes</button>
         <button mat-button (click)="clearNodes()">Clear Nodes</button>
+        <button mat-button (click)="testEdgeEditor()">Test Edge Editor</button>
         <button mat-button (click)="showDebugPanel = false">Close Debug</button>
       </div>
 
@@ -114,7 +121,10 @@ interface SimpleEdge {
                 [attr.x]="getEdgeCoordinates(edge).labelX"
                 [attr.y]="getEdgeCoordinates(edge).labelY"
                 text-anchor="middle"
-                class="edge-label">
+                class="edge-label"
+                (click)="onEdgeLabelClick(edge, $event)"
+                [title]="'Click to edit edge label: ' + (edge.label || 'No label')"
+                style="cursor: pointer;">
                 {{ edge.label }}
               </text>
             </g>
@@ -205,8 +215,23 @@ interface SimpleEdge {
       position: absolute;
       top: 0;
       left: 0;
-      pointer-events: none;
       z-index: 1;
+    }
+
+    .edges {
+      pointer-events: none;
+    }
+
+    .edge {
+      pointer-events: none;
+    }
+
+    .edge line {
+      pointer-events: none;
+    }
+
+    .edge text {
+      pointer-events: auto;
     }
 
     .nodes {
@@ -283,6 +308,15 @@ interface SimpleEdge {
     .edge-label {
       font-size: 12px;
       fill: #666;
+      cursor: pointer;
+      transition: fill 0.2s ease;
+      pointer-events: auto;
+    }
+
+    .edge-label:hover {
+      fill: #1976d2;
+      font-weight: bold;
+      text-decoration: underline;
     }
 
     .status {
@@ -366,11 +400,8 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    console.log('FlowBuilderComponent (Simple) initialized');
     const botId = this.route.snapshot.params['botId'];
     const flowId = this.route.snapshot.params['flowId'];
-
-    console.log('Route params:', { botId, flowId });
 
     if (flowId && flowId !== 'new') {
       this.loadFlow(botId, flowId);
@@ -389,27 +420,39 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
   }
 
   initializeDefaultFlow() {
-    console.log('Initializing default flow');
-    this.nodes = [{
-      id: 'start',
-      label: 'Start',
-      data: { type: 'start' },
-      x: 100,
-      y: 100
-    }];
-    this.edges = [];
-    console.log('Default flow initialized with nodes:', this.nodes);
+    this.nodes = [
+      {
+        id: 'start',
+        label: 'Start',
+        data: { type: 'start' },
+        x: 100,
+        y: 100
+      },
+      {
+        id: 'welcome',
+        label: 'Welcome Message',
+        data: { 
+          type: 'message',
+          content: 'Hello! Welcome to our bot. What would you like to do?',
+          quick_replies: ['Option 1', 'Option 2', 'Option 3']
+        },
+        x: 300,
+        y: 100
+      }
+    ];
+    this.edges = [
+      {
+        id: 'start_to_welcome',
+        source: 'start',
+        target: 'welcome',
+        label: 'Next'
+      }
+    ];
   }
 
   loadFlow(botId: number, flowId: number) {
-    console.log('=== LOADING FLOW ===');
-    console.log('Loading flow:', { botId, flowId });
-    
     this.botService.getFlow(botId, flowId).subscribe({
       next: (flow) => {
-        console.log('=== FLOW LOADED ===');
-        console.log('Raw flow data:', flow);
-        
         // Convert to simple format
         this.nodes = (flow.nodes || []).map((node: any, index: number) => ({
           id: node.id,
@@ -425,14 +468,8 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
           target: edge.target,
           label: edge.label || ''
         }));
-
-        console.log('=== AFTER CONVERSION ===');
-        console.log('Converted nodes:', this.nodes);
-        console.log('Converted edges:', this.edges);
       },
       error: (error) => {
-        console.error('=== FLOW LOAD ERROR ===');
-        console.error('Error loading flow:', error);
         this.snackBar.open('Error loading flow', 'Close', { duration: 3000 });
       }
     });
@@ -482,7 +519,6 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     if (this.connectMode) {
       if (!this.connectingFrom) {
         this.connectingFrom = node;
-        console.log('Selected source node:', node.label);
       } else if (this.connectingFrom.id !== node.id) {
         // Create connection
         const newEdge: SimpleEdge = {
@@ -492,16 +528,20 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
           label: 'Next'
         };
         this.edges = [...this.edges, newEdge];
-        console.log('Created edge:', newEdge);
         this.snackBar.open(`Connected ${this.connectingFrom.label} → ${node.label}`, 'Close', { duration: 2000 });
         this.connectingFrom = null;
         this.connectMode = false;
       }
     } else {
       this.selectedNode = node;
-      console.log('Node selected:', node);
       this.openNodeEditor(node);
     }
+  }
+
+  onEdgeLabelClick(edge: SimpleEdge, event: MouseEvent) {
+    event.stopPropagation();
+    this.snackBar.open(`Editing edge: ${edge.source} → ${edge.target}`, 'Close', { duration: 2000 });
+    this.openEdgeEditor(edge);
   }
 
   startDrag(node: SimpleNode, event: MouseEvent) {
@@ -514,7 +554,6 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
       y: event.clientY - node.y
     };
     event.preventDefault();
-    console.log('Started dragging node:', node.label);
   }
 
   onMouseMove(event: MouseEvent) {
@@ -540,23 +579,20 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     console.log('Add node clicked');
     
     try {
-      const nodeTypes = ['message', 'condition', 'action', 'webhook', 'input'];
-      const randomType = nodeTypes[Math.floor(Math.random() * nodeTypes.length)];
-      
+      // Create a message node by default (most common for quick reply flows)
       const newNode: SimpleNode = {
         id: `node-${Date.now()}`,
-        label: `New ${randomType}`,
+        label: 'New Message',
         data: { 
-          type: randomType,
-          content: '',
-          conditions: [],
-          webhookUrl: ''
+          type: 'message',
+          content: 'Enter your message here',
+          quick_replies: []
         },
         x: 200 + (this.nodes.length % 4) * 200,
         y: 100 + Math.floor(this.nodes.length / 4) * 150
       };
 
-      console.log('Created new node:', newNode);
+      console.log('Created new message node:', newNode);
       this.nodes = [...this.nodes, newNode];
       this.openNodeEditor(newNode);
     } catch (error) {
@@ -566,8 +602,6 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
   }
 
   openNodeEditor(node: SimpleNode) {
-    console.log('Opening node editor for:', node);
-    
     try {
       const dialogRef = this.dialog.open(NodeEditorComponent, {
         width: '600px',
@@ -579,11 +613,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
         disableClose: false
       });
 
-      console.log('Dialog opened');
-
       dialogRef.afterClosed().subscribe(result => {
-        console.log('Dialog closed with result:', result);
-        
         if (result) {
           const index = this.nodes.findIndex(n => n.id === node.id);
           if (index !== -1) {
@@ -592,19 +622,58 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
               label: result.label,
               data: result.data
             };
-            console.log('Node updated in graph');
           }
         }
       });
     } catch (error) {
-      console.error('Error opening node editor:', error);
       this.snackBar.open('Error opening node editor', 'Close', { duration: 3000 });
+    }
+  }
+
+  openEdgeEditor(edge: SimpleEdge) {
+    try {
+      const dialogRef = this.dialog.open(EdgeEditorComponent, {
+        width: '500px',
+        data: { edge: edge },
+        disableClose: false
+      });
+
+      dialogRef.afterClosed().subscribe(result => {
+        if (result) {
+          const index = this.edges.findIndex(e => e.id === edge.id);
+          if (index !== -1) {
+            this.edges[index] = {
+              ...this.edges[index],
+              label: result.label,
+              condition: result.condition
+            };
+            this.snackBar.open('Edge updated successfully', 'Close', { duration: 2000 });
+          }
+        }
+      });
+    } catch (error) {
+      this.snackBar.open('Error opening edge editor', 'Close', { duration: 3000 });
+    }
+  }
+
+  showEdgeEditingHelp() {
+    this.snackBar.open(
+      '💡 Tip: Click on any edge label (text on connection lines) to edit it!', 
+      'Got it', 
+      { duration: 5000 }
+    );
+  }
+
+  testEdgeEditor() {
+    if (this.edges.length > 0) {
+      this.openEdgeEditor(this.edges[0]);
+    } else {
+      this.snackBar.open('No edges available to test. Create some connections first.', 'OK', { duration: 3000 });
     }
   }
 
   deleteSelectedNode() {
     if (this.selectedNode) {
-      console.log('Deleting node:', this.selectedNode.label);
       this.nodes = this.nodes.filter(n => n.id !== this.selectedNode!.id);
       this.edges = this.edges.filter(e => 
         e.source !== this.selectedNode!.id && e.target !== this.selectedNode!.id
@@ -619,27 +688,15 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     const flowId = this.route.snapshot.params['flowId'];
     
     if (botId && flowId && flowId !== 'new') {
-      console.log('Manually refreshing flow...');
       this.loadFlow(botId, parseInt(flowId));
     }
   }
 
   debugInfo() {
     this.showDebugPanel = !this.showDebugPanel;
-    console.log('=== DEBUG INFO ===');
-    console.log('Current nodes:', this.nodes);
-    console.log('Current edges:', this.edges);
-    console.log('Route params:', this.route.snapshot.params);
-    console.log('Component state:', {
-      nodesLength: this.nodes.length,
-      edgesLength: this.edges.length,
-      selectedNode: this.selectedNode,
-      connectMode: this.connectMode
-    });
   }
 
   addTestNodes() {
-    console.log('Adding test nodes...');
     this.nodes = [
       {
         id: 'test1',
@@ -677,7 +734,6 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
         label: 'Then'
       }
     ];
-    console.log('Test nodes added:', this.nodes);
   }
 
   clearNodes() {
@@ -686,19 +742,13 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     this.selectedNode = null;
     this.connectingFrom = null;
     this.connectMode = false;
-    console.log('Nodes cleared');
   }
 
   saveFlow() {
-    console.log('=== SAVE FLOW STARTED ===');
-    
     const botId = parseInt(this.route.snapshot.params['botId']);
     const flowId = this.route.snapshot.params['flowId'];
-    
-    console.log('Route params:', { botId, flowId });
 
     if (!botId || isNaN(botId)) {
-      console.error('Invalid botId:', botId);
       this.snackBar.open('Invalid bot ID', 'Close', { duration: 3000 });
       return;
     }
@@ -725,27 +775,20 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
       variables: {}
     };
 
-    console.log('Flow data to save:', flowData);
-
     if (flowId && flowId !== 'new') {
-      console.log('=== CALLING UPDATE FLOW ===');
       this.botService.updateFlow(botId, parseInt(flowId), flowData).subscribe({
         next: (response) => {
-          console.log('Flow updated successfully:', response);
           this.snackBar.open('Flow saved successfully', 'Close', { duration: 3000 });
           // Reload the flow to get the updated version
           this.loadFlow(botId, parseInt(flowId));
         },
         error: (error) => {
-          console.error('Error saving flow:', error);
           this.snackBar.open(`Error saving flow: ${error.error?.detail || error.message}`, 'Close', { duration: 5000 });
         }
       });
     } else {
-      console.log('=== CALLING CREATE FLOW ===');
       this.botService.createFlow(botId, flowData).subscribe({
         next: (flow) => {
-          console.log('Flow created successfully:', flow);
           this.snackBar.open('Flow created successfully', 'Close', { duration: 3000 });
           // Navigate to the edit page for the new flow
           this.router.navigate(['/bots', botId, 'flows', flow.id]).then(() => {
@@ -756,13 +799,10 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
           });
         },
         error: (error) => {
-          console.error('Error creating flow:', error);
           this.snackBar.open(`Error creating flow: ${error.error?.detail || error.message}`, 'Close', { duration: 5000 });
         }
       });
     }
-
-    console.log('=== SAVE FLOW METHOD END ===');
   }
 
   setAsDefault() {
@@ -779,7 +819,6 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
         this.snackBar.open('Flow set as default successfully', 'Close', { duration: 3000 });
       },
       error: (error) => {
-        console.error('Error setting flow as default:', error);
         this.snackBar.open('Failed to set flow as default', 'Close', { duration: 3000 });
       }
     });
