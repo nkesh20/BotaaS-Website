@@ -427,10 +427,8 @@ export class FlowListComponent implements OnInit {
         this.flows = flows;
         this.defaultFlow = flows.find(f => f.is_default) || null;
         this.isLoading = false;
-        console.log('Flows loaded:', flows);
       },
       error: (error) => {
-        console.error('Error loading flows:', error);
         this.error = 'Failed to load flows. Please try again.';
         this.isLoading = false;
       }
@@ -459,7 +457,6 @@ export class FlowListComponent implements OnInit {
         this.loadFlows();
       },
       error: (error) => {
-        console.error('Error duplicating flow:', error);
         this.snackBar.open('Failed to duplicate flow', 'Close', { duration: 3000 });
       }
     });
@@ -478,7 +475,6 @@ export class FlowListComponent implements OnInit {
         this.loadFlows();
       },
       error: (error) => {
-        console.error('Error toggling flow:', error);
         this.snackBar.open('Failed to update flow status', 'Close', { duration: 3000 });
       }
     });
@@ -491,7 +487,6 @@ export class FlowListComponent implements OnInit {
         this.loadFlows();
       },
       error: (error) => {
-        console.error('Error setting default flow:', error);
         this.snackBar.open('Failed to set default flow', 'Close', { duration: 3000 });
       }
     });
@@ -505,7 +500,6 @@ export class FlowListComponent implements OnInit {
           this.loadFlows();
         },
         error: (error) => {
-          console.error('Error deleting flow:', error);
           this.snackBar.open('Failed to delete flow', 'Close', { duration: 3000 });
         }
       });
@@ -518,11 +512,9 @@ export class FlowListComponent implements OnInit {
 
     this.botService.executeFlow(this.botId, flow.id, testMessage, 'test_user').subscribe({
       next: (result) => {
-        console.log('Flow test result:', result);
         this.snackBar.open('Flow test completed', 'Close', { duration: 3000 });
       },
       error: (error) => {
-        console.error('Error testing flow:', error);
         this.snackBar.open('Failed to test flow', 'Close', { duration: 3000 });
       }
     });

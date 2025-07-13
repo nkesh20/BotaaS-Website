@@ -84,94 +84,79 @@ export class BotService {
   private apiUrl = `${environment.apiUrl}`;
 
   constructor(private http: HttpClient) {
-    console.log('BotService initialized with API URL:', this.apiUrl);
   }
 
   // Bot management methods
   getBots(skip: number = 0, limit: number = 100): Observable<BotListResponse> {
     const url = `${this.apiUrl}/telegram-bots?skip=${skip}&limit=${limit}`;
-    console.log('Getting bots from:', url);
     return this.http.get<BotListResponse>(url);
   }
 
   getBot(id: number): Observable<Bot> {
     const url = `${this.apiUrl}/telegram-bots/${id}`;
-    console.log('Getting bot from:', url);
     return this.http.get<Bot>(url);
   }
 
 
   updateBot(id: number, bot: BotUpdate): Observable<Bot> {
     const url = `${this.apiUrl}/telegram-bots/${id}`;
-    console.log('Updating bot at:', url, bot);
     return this.http.put<Bot>(url, bot);
   }
 
   deleteBot(id: number): Observable<void> {
     const url = `${this.apiUrl}/telegram-bots/${id}`;
-    console.log('Deleting bot at:', url);
     return this.http.delete<void>(url);
   }
 
   refreshBotInfo(id: number): Observable<Bot> {
     const url = `${this.apiUrl}/telegram-bots/${id}/refresh`;
-    console.log('Refreshing bot info at:', url);
     return this.http.post<Bot>(url, {});
   }
 
   toggleBotActive(id: number): Observable<Bot> {
     const url = `${this.apiUrl}/telegram-bots/${id}/toggle`;
-    console.log('Toggling bot active at:', url);
     return this.http.post<Bot>(url, {});
   }
 
   // Flow management methods - Updated to match backend endpoints
   getBotFlows(botId: number): Observable<Flow[]> {
     const url = `${this.apiUrl}/flows/${botId}`;
-    console.log('Getting flows from:', url);
     return this.http.get<Flow[]>(url);
   }
 
   getFlow(botId: number, flowId: number): Observable<Flow> {
     const url = `${this.apiUrl}/flows/${botId}/${flowId}`;
-    console.log('Getting flow from:', url);
     return this.http.get<Flow>(url);
   }
 
   createFlow(botId: number, flow: FlowCreate): Observable<Flow> {
     const url = `${this.apiUrl}/flows/${botId}`;
-    console.log('Creating flow at:', url, flow);
     return this.http.post<Flow>(url, flow);
   }
 
   updateFlow(botId: number, flowId: number, flow: FlowUpdate): Observable<Flow> {
     const url = `${this.apiUrl}/flows/${botId}/${flowId}`;
-    console.log('Updating flow at:', url, flow);
     return this.http.put<Flow>(url, flow);
   }
 
   deleteFlow(botId: number, flowId: number): Observable<void> {
     const url = `${this.apiUrl}/flows/${botId}/${flowId}`;
-    console.log('Deleting flow at:', url);
     return this.http.delete<void>(url);
   }
 
   // Additional flow methods
   activateFlow(botId: number, flowId: number): Observable<any> {
     const url = `${this.apiUrl}/flows/${botId}/${flowId}/activate`;
-    console.log('Activating flow at:', url);
     return this.http.post<any>(url, {});
   }
 
   deactivateFlow(botId: number, flowId: number): Observable<any> {
     const url = `${this.apiUrl}/flows/${botId}/${flowId}/deactivate`;
-    console.log('Deactivating flow at:', url);
     return this.http.post<any>(url, {});
   }
 
   setFlowAsDefault(botId: number, flowId: number): Observable<any> {
     const url = `${this.apiUrl}/flows/${botId}/${flowId}/set-default`;
-    console.log('Setting flow as default at:', url);
     return this.http.post<any>(url, {});
   }
 
@@ -182,7 +167,6 @@ export class BotService {
       user_id: userId,
       session_id: sessionId
     };
-    console.log('Executing flow at:', url, payload);
     return this.http.post<any>(url, payload);
   }
 
@@ -217,7 +201,6 @@ export class BotService {
   // Enhanced bot creation (webhooks are setup automatically)
   createBot(botData: any): Observable<any> {
     const url = `${this.apiUrl}/telegram-bots`;
-    console.log('Creating bot with automatic webhook setup:', botData);
     return this.http.post(url, botData);
   }
 }
