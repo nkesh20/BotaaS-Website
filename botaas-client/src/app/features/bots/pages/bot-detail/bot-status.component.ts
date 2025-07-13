@@ -306,10 +306,8 @@ export class BotStatusComponent implements OnInit {
             next: (status: any) => {
                 this.botStatus = status;
                 this.isLoading = false;
-                console.log('Bot status:', status);
             },
             error: (error: any) => {
-                console.error('Error getting bot status:', error);
                 this.snackBar.open('Error loading bot status', 'Close', { duration: 3000 });
                 this.isLoading = false;
             }
@@ -362,7 +360,6 @@ export class BotStatusComponent implements OnInit {
                 this.refreshStatus();
             },
             error: (error: any) => {
-                console.error('Error fixing webhook:', error);
                 this.snackBar.open('❌ Failed to fix webhook', 'Close', { duration: 3000 });
                 this.isLoading = false;
             }
@@ -386,7 +383,6 @@ export class BotStatusComponent implements OnInit {
                 this.isLoading = false;
             },
             error: (error: any) => {
-                console.error('Error testing bot:', error);
                 this.snackBar.open('❌ Bot test failed', 'Close', { duration: 3000 });
                 this.isLoading = false;
             }
