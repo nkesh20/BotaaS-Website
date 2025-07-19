@@ -1,6 +1,6 @@
 import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray, FormControl } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -175,7 +175,7 @@ interface NodeData {
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Request Body (JSON)</mat-label>
                 <textarea matInput formControlName="webhookBody" rows="4" 
-                          placeholder='{"message": "{{user_message}}"}'></textarea>
+                          placeholder='{"message": "{user_message}"}'></textarea>
               </mat-form-field>
             </div>
 
@@ -274,7 +274,7 @@ interface NodeData {
 })
 export class NodeEditorComponent implements OnInit {
   nodeForm: FormGroup;
-  quickReplies: FormGroup;
+  quickReplies: FormArray;
 
   constructor(
     private fb: FormBuilder,
@@ -301,7 +301,7 @@ export class NodeEditorComponent implements OnInit {
       endMessage: ['']
     });
 
-    this.quickReplies = this.fb.group({});
+    this.quickReplies = this.fb.array([]);
   }
 
   ngOnInit() {
@@ -334,8 +334,8 @@ export class NodeEditorComponent implements OnInit {
 
     // Load quick replies
     if (data.quick_replies && Array.isArray(data.quick_replies)) {
-      data.quick_replies.forEach((reply: string, index: number) => {
-        this.quickReplies.addControl(index.toString(), this.fb.control(reply));
+      data.quick_replies.forEach((reply: string) => {
+        this.quickReplies.push(new FormControl(reply));
       });
     }
   }
@@ -351,7 +351,7 @@ export class NodeEditorComponent implements OnInit {
     const type = this.nodeForm.get('type')?.value;
     
     if (type !== 'message') {
-      this.quickReplies = this.fb.group({});
+      this.quickReplies = this.fb.array([]);
     }
     
     if (type !== 'condition') {
@@ -394,24 +394,21 @@ export class NodeEditorComponent implements OnInit {
   }
 
   addQuickReply() {
-    const index = Object.keys(this.quickReplies.controls).length;
-    this.quickReplies.addControl(index.toString(), this.fb.control(''));
-    
+    this.quickReplies.push(new FormControl(''));
     // Force change detection
     this.cdr.detectChanges();
   }
 
   removeQuickReply(index: number) {
-    const controlKey = index.toString();
-    if (this.quickReplies.contains(controlKey)) {
-      this.quickReplies.removeControl(controlKey);
+    if (index >= 0 && index < this.quickReplies.length) {
+      this.quickReplies.removeAt(index);
       // Force change detection
       this.cdr.detectChanges();
     }
   }
 
   getQuickReplyControls() {
-    return Object.values(this.quickReplies.controls);
+    return (this.quickReplies.controls as FormControl[]);
   }
 
   getNodeIcon(): string {
@@ -454,7 +451,7 @@ export class NodeEditorComponent implements OnInit {
         case 'message':
           nodeData.content = formValue.content;
           // Add quick replies
-          const quickRepliesArray = Object.values(this.quickReplies.value).filter((reply: any) => reply.trim());
+          const quickRepliesArray = this.quickReplies.value.filter((reply: any) => reply.trim());
           if (quickRepliesArray.length > 0) {
             nodeData.quick_replies = quickRepliesArray;
           }
