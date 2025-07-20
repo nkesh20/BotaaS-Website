@@ -21,8 +21,7 @@ import { DatePipe, NgFor, NgIf } from '@angular/common';
     MatProgressSpinnerModule,
     MatIconModule,
     DatePipe,
-    NgIf,
-    NgFor
+    NgIf
   ]
 })
 export class DashboardComponent implements OnInit {
