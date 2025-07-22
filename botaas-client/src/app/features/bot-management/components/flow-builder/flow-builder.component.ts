@@ -479,17 +479,91 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     return this.nodes.find(n => n.id === id);
   }
 
+  /**
+   * Returns the intersection point between a line from (x0, y0) to (x1, y1) and the rectangle centered at (cx, cy) with width w and height h.
+   * Returns the intersection point on the rectangle border closest to (x0, y0).
+   */
+  private getRectIntersection(x0: number, y0: number, x1: number, y1: number, cx: number, cy: number, w: number, h: number) {
+    // Rectangle sides
+    const left = cx;
+    const right = cx + w;
+    const top = cy;
+    const bottom = cy + h;
+    // Direction vector
+    const dx = x1 - x0;
+    const dy = y1 - y0;
+    let tMin = Infinity;
+    let ix = x1, iy = y1;
+    // Check intersection with each side
+    // Left (x = left)
+    if (dx !== 0) {
+      const t = (left - x0) / dx;
+      const y = y0 + t * dy;
+      if (t > 0 && y >= top && y <= bottom && t < tMin) {
+        tMin = t;
+        ix = left;
+        iy = y;
+      }
+    }
+    // Right (x = right)
+    if (dx !== 0) {
+      const t = (right - x0) / dx;
+      const y = y0 + t * dy;
+      if (t > 0 && y >= top && y <= bottom && t < tMin) {
+        tMin = t;
+        ix = right;
+        iy = y;
+      }
+    }
+    // Top (y = top)
+    if (dy !== 0) {
+      const t = (top - y0) / dy;
+      const x = x0 + t * dx;
+      if (t > 0 && x >= left && x <= right && t < tMin) {
+        tMin = t;
+        ix = x;
+        iy = top;
+      }
+    }
+    // Bottom (y = bottom)
+    if (dy !== 0) {
+      const t = (bottom - y0) / dy;
+      const x = x0 + t * dx;
+      if (t > 0 && x >= left && x <= right && t < tMin) {
+        tMin = t;
+        ix = x;
+        iy = bottom;
+      }
+    }
+    return { x: ix, y: iy };
+  }
+
   getEdgeCoordinates(edge: SimpleEdge) {
     const sourceNode = this.getNodeById(edge.source);
     const targetNode = this.getNodeById(edge.target);
-    
+    const nodeWidth = 120;
+    const nodeHeight = 44;
+    if (!sourceNode || !targetNode) {
+      return { x1: 0, y1: 0, x2: 0, y2: 0, labelX: 0, labelY: 0 };
+    }
+    // Centers
+    const sourceCenterX = sourceNode.x + nodeWidth / 2;
+    const sourceCenterY = sourceNode.y + nodeHeight / 2;
+    const targetCenterX = targetNode.x + nodeWidth / 2;
+    const targetCenterY = targetNode.y + nodeHeight / 2;
+    // Intersection points
+    const sourceIntersect = this.getRectIntersection(targetCenterX, targetCenterY, sourceCenterX, sourceCenterY, sourceNode.x, sourceNode.y, nodeWidth, nodeHeight);
+    const targetIntersect = this.getRectIntersection(sourceCenterX, sourceCenterY, targetCenterX, targetCenterY, targetNode.x, targetNode.y, nodeWidth, nodeHeight);
+    // Label at midpoint
+    const labelX = (sourceIntersect.x + targetIntersect.x) / 2;
+    const labelY = (sourceIntersect.y + targetIntersect.y) / 2 - 8;
     return {
-      x1: (sourceNode?.x || 0) + 60,
-      y1: (sourceNode?.y || 0) + 30,
-      x2: (targetNode?.x || 0) + 60,
-      y2: (targetNode?.y || 0) + 30,
-      labelX: ((sourceNode?.x || 0) + (targetNode?.x || 0) + 120) / 2,
-      labelY: ((sourceNode?.y || 0) + (targetNode?.y || 0) + 60) / 2
+      x1: sourceIntersect.x,
+      y1: sourceIntersect.y,
+      x2: targetIntersect.x,
+      y2: targetIntersect.y,
+      labelX,
+      labelY
     };
   }
 
