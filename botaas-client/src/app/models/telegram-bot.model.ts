@@ -6,6 +6,9 @@ export interface TelegramBot {
     first_name: string;
     description?: string;
     short_description?: string;
+    about?: string;
+    bot_picture_url?: string;
+    description_picture_url?: string;
     is_active: boolean;
     can_join_groups: boolean;
     can_read_all_group_messages: boolean;
@@ -19,10 +22,12 @@ export interface TelegramBotCreate {
 }
 
 export interface TelegramBotUpdate {
-    username?: string;
     first_name?: string;
     description?: string;
     short_description?: string;
+    about?: string;
+    bot_picture_url?: string;
+    description_picture_url?: string;
     is_active?: boolean;
     can_join_groups?: boolean;
     can_read_all_group_messages?: boolean;

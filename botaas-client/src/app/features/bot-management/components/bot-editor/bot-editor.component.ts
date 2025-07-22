@@ -23,36 +23,91 @@ import { BotService } from '../../services/bot.service';
             Bot token is required
           </div>
         </div>
-        
-        <div class="form-group" *ngIf="isEditing">
-          <label for="description">Description</label>
-          <textarea id="description" formControlName="description" class="form-control"></textarea>
+
+        <!-- Basic Bot Information -->
+        <div class="form-section" *ngIf="isEditing">
+          <h3>Basic Information</h3>
+          
+          <div class="form-group">
+            <label for="firstName">Bot Name</label>
+            <input id="firstName" type="text" formControlName="first_name" class="form-control" placeholder="Enter bot display name">
+            <small class="help-text">This is the name that appears in Telegram</small>
+          </div>
+
+          <div class="form-group">
+            <label for="about">About</label>
+            <textarea id="about" formControlName="about" class="form-control" rows="3" placeholder="Tell users what your bot does..."></textarea>
+            <small class="help-text">Brief description of your bot's purpose</small>
+          </div>
         </div>
 
-        <div class="form-group" *ngIf="isEditing">
-          <label for="shortDescription">Short Description</label>
-          <textarea id="shortDescription" formControlName="short_description" class="form-control"></textarea>
+        <!-- Descriptions -->
+        <div class="form-section" *ngIf="isEditing">
+          <h3>Descriptions</h3>
+          
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" formControlName="description" class="form-control" rows="4" placeholder="Detailed description of your bot..."></textarea>
+            <small class="help-text">Detailed description shown in bot info</small>
+          </div>
+
+          <div class="form-group">
+            <label for="shortDescription">Short Description</label>
+            <textarea id="shortDescription" formControlName="short_description" class="form-control" rows="2" placeholder="Brief description..."></textarea>
+            <small class="help-text">Short description for bot lists</small>
+          </div>
         </div>
 
-        <div class="form-group" *ngIf="isEditing">
-          <label class="checkbox-label">
-            <input type="checkbox" formControlName="can_join_groups">
-            Can Join Groups
-          </label>
+        <!-- Images -->
+        <div class="form-section" *ngIf="isEditing">
+          <h3>Images</h3>
+          
+          <div class="form-group">
+            <label for="botPicture">Bot Profile Picture URL</label>
+            <input id="botPicture" type="url" formControlName="bot_picture_url" class="form-control" placeholder="https://example.com/bot-avatar.jpg">
+            <small class="help-text">URL to your bot's profile picture</small>
+            <div class="note-warning">
+              <strong>Note:</strong> Bot profile pictures must be set through <a href="https://t.me/BotFather" target="_blank">&#64;BotFather</a> on Telegram. This field is for your reference only.
+            </div>
+            <div class="image-preview" *ngIf="botForm.get('bot_picture_url')?.value">
+              <img [src]="botForm.get('bot_picture_url')?.value" alt="Bot Picture Preview" (error)="onImageError($event)">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="descriptionPicture">Description Picture URL</label>
+            <input id="descriptionPicture" type="url" formControlName="description_picture_url" class="form-control" placeholder="https://example.com/description-image.jpg">
+            <small class="help-text">URL to an image that describes your bot</small>
+            <div class="image-preview" *ngIf="botForm.get('description_picture_url')?.value">
+              <img [src]="botForm.get('description_picture_url')?.value" alt="Description Picture Preview" (error)="onImageError($event)">
+            </div>
+          </div>
         </div>
 
-        <div class="form-group" *ngIf="isEditing">
-          <label class="checkbox-label">
-            <input type="checkbox" formControlName="can_read_all_group_messages">
-            Can Read All Group Messages
-          </label>
-        </div>
+        <!-- Bot Settings -->
+        <div class="form-section" *ngIf="isEditing">
+          <h3>Bot Settings</h3>
+          
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="can_join_groups">
+              Can Join Groups
+            </label>
+          </div>
 
-        <div class="form-group" *ngIf="isEditing">
-          <label class="checkbox-label">
-            <input type="checkbox" formControlName="supports_inline_queries">
-            Supports Inline Queries
-          </label>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="can_read_all_group_messages">
+              Can Read All Group Messages
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="supports_inline_queries">
+              Supports Inline Queries
+            </label>
+          </div>
         </div>
         
         <div class="button-group">
@@ -144,6 +199,64 @@ import { BotService } from '../../services/bot.service';
       width: 1rem;
       height: 1rem;
     }
+
+    .form-section {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+    }
+
+    .form-section h3 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    .help-text {
+      display: block;
+      margin-top: 5px;
+      font-size: 0.875rem;
+      color: #666;
+    }
+
+    .image-preview {
+      margin-top: 10px;
+      max-width: 100px;
+      max-height: 100px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .image-preview img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .note-warning {
+      margin-top: 8px;
+      padding: 8px 12px;
+      background-color: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      color: #856404;
+    }
+
+    .note-warning strong {
+      color: #533f03;
+    }
+
+    .note-warning a {
+      color: #0066cc;
+      text-decoration: none;
+    }
+
+    .note-warning a:hover {
+      text-decoration: underline;
+    }
   `]
 })
 export class BotEditorComponent implements OnInit {
@@ -160,8 +273,12 @@ export class BotEditorComponent implements OnInit {
   ) {
     this.botForm = this.fb.group({
       token: ['', [Validators.required]],
+      first_name: [''],
+      about: [''],
       description: [''],
       short_description: [''],
+      bot_picture_url: [''],
+      description_picture_url: [''],
       can_join_groups: [true],
       can_read_all_group_messages: [false],
       supports_inline_queries: [false]
@@ -172,6 +289,9 @@ export class BotEditorComponent implements OnInit {
     this.botId = Number(this.route.snapshot.paramMap.get('id'));
     if (this.botId) {
       this.isEditing = true;
+      // Remove required validator from token when editing
+      this.botForm.get('token')?.clearValidators();
+      this.botForm.get('token')?.updateValueAndValidity();
       this.loadBot();
     }
   }
@@ -182,8 +302,12 @@ export class BotEditorComponent implements OnInit {
         next: (bot) => {
           this.bot = bot;
           this.botForm.patchValue({
+            first_name: bot.first_name,
+            about: bot.about,
             description: bot.description,
             short_description: bot.short_description,
+            bot_picture_url: bot.bot_picture_url,
+            description_picture_url: bot.description_picture_url,
             can_join_groups: bot.can_join_groups,
             can_read_all_group_messages: bot.can_read_all_group_messages,
             supports_inline_queries: bot.supports_inline_queries
@@ -232,8 +356,12 @@ export class BotEditorComponent implements OnInit {
         next: (updatedBot) => {
           this.bot = updatedBot;
           this.botForm.patchValue({
+            first_name: updatedBot.first_name,
+            about: updatedBot.about,
             description: updatedBot.description,
             short_description: updatedBot.short_description,
+            bot_picture_url: updatedBot.bot_picture_url,
+            description_picture_url: updatedBot.description_picture_url,
             can_join_groups: updatedBot.can_join_groups,
             can_read_all_group_messages: updatedBot.can_read_all_group_messages,
             supports_inline_queries: updatedBot.supports_inline_queries
@@ -261,5 +389,13 @@ export class BotEditorComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/bots']);
+  }
+
+  onImageError(event: Event): void {
+    const target = event.target as HTMLImageElement;
+    const preview = target.parentElement;
+    if (preview) {
+      preview.style.display = 'none';
+    }
   }
 } 
