@@ -383,6 +383,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
   
   isDragging = false;
   dragOffset = { x: 0, y: 0 };
+  wasDragging = false;
   
   canvasWidth = 1200;
   canvasHeight = 800;
@@ -654,6 +655,10 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
   }
 
   onNodeClick(node: SimpleNode) {
+    if (this.wasDragging) {
+      this.wasDragging = false;
+      return;
+    }
     if (this.connectMode) {
       if (!this.connectingFrom) {
         this.connectingFrom = node;
@@ -684,13 +689,18 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
 
   startDrag(node: SimpleNode, event: MouseEvent) {
     if (this.connectMode) return;
-    
     this.isDragging = true;
     this.selectedNode = node;
-    this.dragOffset = {
-      x: event.clientX - node.x,
-      y: event.clientY - node.y
-    };
+    this.wasDragging = false;
+    if (this.canvasRef) {
+      const rect = this.canvasRef.nativeElement.getBoundingClientRect();
+      this.dragOffset = {
+        x: event.clientX - rect.left - node.x,
+        y: event.clientY - rect.top - node.y
+      };
+    } else {
+      this.dragOffset = { x: 0, y: 0 };
+    }
     event.preventDefault();
   }
 
@@ -703,6 +713,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
       // Keep nodes within canvas bounds
       this.selectedNode.x = Math.max(0, Math.min(newX, this.canvasWidth - 150));
       this.selectedNode.y = Math.max(0, Math.min(newY, this.canvasHeight - 60));
+      this.wasDragging = true;
     }
   }
 
