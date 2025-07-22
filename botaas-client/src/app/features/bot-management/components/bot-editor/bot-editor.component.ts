@@ -26,25 +26,15 @@ import { BotService } from '../../services/bot.service';
 
         <!-- Basic Bot Information -->
         <div class="form-section" *ngIf="isEditing">
-          <h3>Basic Information</h3>
-          
           <div class="form-group">
             <label for="firstName">Bot Name</label>
             <input id="firstName" type="text" formControlName="first_name" class="form-control" placeholder="Enter bot display name">
             <small class="help-text">This is the name that appears in Telegram</small>
           </div>
-
-          <div class="form-group">
-            <label for="about">About</label>
-            <textarea id="about" formControlName="about" class="form-control" rows="3" placeholder="Tell users what your bot does..."></textarea>
-            <small class="help-text">Brief description of your bot's purpose</small>
-          </div>
         </div>
 
         <!-- Descriptions -->
         <div class="form-section" *ngIf="isEditing">
-          <h3>Descriptions</h3>
-          
           <div class="form-group">
             <label for="description">Description</label>
             <textarea id="description" formControlName="description" class="form-control" rows="4" placeholder="Detailed description of your bot..."></textarea>
@@ -274,7 +264,6 @@ export class BotEditorComponent implements OnInit {
     this.botForm = this.fb.group({
       token: ['', [Validators.required]],
       first_name: [''],
-      about: [''],
       description: [''],
       short_description: [''],
       bot_picture_url: [''],
@@ -303,7 +292,6 @@ export class BotEditorComponent implements OnInit {
           this.bot = bot;
           this.botForm.patchValue({
             first_name: bot.first_name,
-            about: bot.about,
             description: bot.description,
             short_description: bot.short_description,
             bot_picture_url: bot.bot_picture_url,
@@ -357,7 +345,6 @@ export class BotEditorComponent implements OnInit {
           this.bot = updatedBot;
           this.botForm.patchValue({
             first_name: updatedBot.first_name,
-            about: updatedBot.about,
             description: updatedBot.description,
             short_description: updatedBot.short_description,
             bot_picture_url: updatedBot.bot_picture_url,
