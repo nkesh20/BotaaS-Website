@@ -753,40 +753,70 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
       return;
     }
     
-    // Convert back to API format
-    const flowData = {
-      name: flowId ? `Flow ${flowId} Updated` : 'New Flow ' + new Date().toLocaleString(),
-      description: 'Created via flow builder',
-      is_active: true,
-      is_default: false,
-      nodes: this.nodes.map(node => ({
-        id: node.id,
-        label: node.label,
-        data: node.data,
-        position: { x: node.x, y: node.y }
-      })),
-      edges: this.edges.map(edge => ({
-        id: edge.id,
-        source: edge.source,
-        target: edge.target,
-        label: edge.label
-      })),
-      triggers: [],
-      variables: {}
-    };
-
+    // First get the current flow to preserve its default status
     if (flowId && flowId !== 'new') {
-      this.botService.updateFlow(botId, parseInt(flowId), flowData).subscribe({
-        next: (response) => {
-          this.snackBar.open('Flow saved successfully', 'Close', { duration: 3000 });
-          // Reload the flow to get the updated version
-          this.loadFlow(botId, parseInt(flowId));
+      this.botService.getFlow(botId, parseInt(flowId)).subscribe({
+        next: (currentFlow) => {
+          // Convert back to API format, preserving the current is_default status
+          const flowData = {
+            name: flowId ? `Flow ${flowId} Updated` : 'New Flow ' + new Date().toLocaleString(),
+            description: 'Created via flow builder',
+            is_active: true,
+            is_default: currentFlow.is_default, // Preserve current default status
+            nodes: this.nodes.map(node => ({
+              id: node.id,
+              label: node.label,
+              data: node.data,
+              position: { x: node.x, y: node.y }
+            })),
+            edges: this.edges.map(edge => ({
+              id: edge.id,
+              source: edge.source,
+              target: edge.target,
+              label: edge.label
+            })),
+            triggers: [],
+            variables: {}
+          };
+
+          this.botService.updateFlow(botId, parseInt(flowId), flowData).subscribe({
+            next: (response) => {
+              this.snackBar.open('Flow saved successfully', 'Close', { duration: 3000 });
+              // Reload the flow to get the updated version
+              this.loadFlow(botId, parseInt(flowId));
+            },
+            error: (error) => {
+              this.snackBar.open(`Error saving flow: ${error.error?.detail || error.message}`, 'Close', { duration: 5000 });
+            }
+          });
         },
         error: (error) => {
-          this.snackBar.open(`Error saving flow: ${error.error?.detail || error.message}`, 'Close', { duration: 5000 });
+          this.snackBar.open('Error getting current flow status', 'Close', { duration: 3000 });
         }
       });
     } else {
+      // For new flows, set is_default to false
+      const flowData = {
+        name: 'New Flow ' + new Date().toLocaleString(),
+        description: 'Created via flow builder',
+        is_active: true,
+        is_default: false,
+        nodes: this.nodes.map(node => ({
+          id: node.id,
+          label: node.label,
+          data: node.data,
+          position: { x: node.x, y: node.y }
+        })),
+        edges: this.edges.map(edge => ({
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          label: edge.label
+        })),
+        triggers: [],
+        variables: {}
+      };
+
       this.botService.createFlow(botId, flowData).subscribe({
         next: (flow) => {
           this.snackBar.open('Flow created successfully', 'Close', { duration: 3000 });
