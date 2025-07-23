@@ -77,6 +77,7 @@ export class SidebarComponent implements OnInit {
   }
 
   isActiveRoute(route: string): boolean {
-    return this.router.url === route || this.router.url.startsWith(route);
+    // Only highlight the button if the current URL exactly matches the route
+    return this.router.url === route;
   }
 }
