@@ -11,7 +11,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTabsModule } from '@angular/material/tabs';
-import { NgFor, NgIf, DatePipe } from '@angular/common';
+import { NgFor, NgIf } from '@angular/common';
 import { BotStatusComponent } from '../../../features/bots/pages/bot-detail/bot-status.component';
 import { MatDividerModule } from '@angular/material/divider';
 
@@ -35,7 +35,6 @@ import { MatDividerModule } from '@angular/material/divider';
         MatDividerModule,
         NgFor,
         NgIf,
-        DatePipe,
         BotStatusComponent
     ]
 })
@@ -141,10 +140,22 @@ export class BotListComponent implements OnInit {
         }
     }
 
-    private showSnackBar(message: string, type: 'success' | 'error'): void {
+    private showSnackBar(message: string, type: 'success' | 'error' = 'success'): void {
         this.snackBar.open(message, 'Close', {
             duration: 3000,
-            panelClass: type === 'success' ? ['success-snackbar'] : ['error-snackbar']
+            panelClass: type === 'error' ? 'error-snackbar' : 'success-snackbar'
         });
+    }
+
+    onBotImageError(event: Event): void {
+        const target = event.target as HTMLImageElement;
+        target.style.display = 'none';
+        const avatar = target.closest('.bot-avatar');
+        if (avatar) {
+            const icon = avatar.querySelector('mat-icon') as HTMLElement;
+            if (icon) {
+                icon.style.display = 'block';
+            }
+        }
     }
 }

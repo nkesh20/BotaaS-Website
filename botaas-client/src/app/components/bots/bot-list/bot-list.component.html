@@ -54,22 +54,17 @@
                     <mat-menu #botMenu="matMenu">
                         <button mat-menu-item (click)="editBot(bot)">
                             <mat-icon>edit</mat-icon>
-                            <span>Edit</span>
+                            <span>Edit Bot</span>
                         </button>
                         <button mat-menu-item (click)="manageFlows(bot)">
                             <mat-icon>account_tree</mat-icon>
                             <span>Manage Flows</span>
                         </button>
-                        <button mat-menu-item (click)="viewBotDetails(bot)">
-                            <mat-icon>info</mat-icon>
-                            <span>View Details</span>
+                        <button mat-menu-item (click)="toggleBotStatus(bot)">
+                            <mat-icon>{{ bot.is_active ? 'pause' : 'play_arrow' }}</mat-icon>
+                            <span>{{ bot.is_active ? 'Deactivate' : 'Activate' }}</span>
                         </button>
-                        <button mat-menu-item (click)="refreshBotInfo(bot)">
-                            <mat-icon>refresh</mat-icon>
-                            <span>Refresh Info</span>
-                        </button>
-                        <mat-divider></mat-divider>
-                        <button mat-menu-item (click)="deleteBot(bot)" class="delete-option">
+                        <button mat-menu-item (click)="deleteBot(bot)" class="delete-item">
                             <mat-icon>delete</mat-icon>
                             <span>Delete</span>
                         </button>
@@ -77,40 +72,24 @@
                 </mat-card-header>
 
                 <mat-card-content>
-                    <!-- Bot Status -->
-                    <div class="bot-status">
-                        <mat-chip-set>
-                            <mat-chip [class]="bot.is_active ? 'status-active' : 'status-inactive'">
-                                <mat-icon matChipAvatar>{{ bot.is_active ? 'radio_button_checked' : 'radio_button_unchecked' }}</mat-icon>
+                    <!-- Description section -->
+                    <div *ngIf="bot.short_description" class="bot-description">
+                        <p>{{ bot.short_description }}</p>
+                    </div>
+
+                    <!-- Status Chips -->
+                    <div class="status-chips">
+                        <mat-chip-listbox>
+                            <mat-chip [color]="bot.is_active ? 'primary' : 'warn'" selected>
                                 {{ bot.is_active ? 'Active' : 'Inactive' }}
                             </mat-chip>
-                        </mat-chip-set>
-                    </div>
-
-                    <!-- Bot Description -->
-                    <p *ngIf="bot.description" class="bot-description">{{ bot.description }}</p>
-                    <p *ngIf="!bot.description" class="no-description">No description available</p>
-
-                    <!-- Bot Features -->
-                    <div class="bot-features">
-                        <div class="feature" *ngIf="bot.can_join_groups">
-                            <mat-icon>group</mat-icon>
-                            <span>Can join groups</span>
-                        </div>
-                        <div class="feature" *ngIf="bot.supports_inline_queries">
-                            <mat-icon>search</mat-icon>
-                            <span>Inline queries</span>
-                        </div>
-                        <div class="feature" *ngIf="bot.can_read_all_group_messages">
-                            <mat-icon>visibility</mat-icon>
-                            <span>Reads all messages</span>
-                        </div>
-                    </div>
-
-                    <!-- Bot Info -->
-                    <div class="bot-info">
-                        <small>Bot ID: {{ bot.bot_id }}</small>
-                        <small>Created: {{ bot.created_at | date:'short' }}</small>
+                            <mat-chip *ngIf="bot.can_join_groups" color="accent" selected>
+                                Groups
+                            </mat-chip>
+                            <mat-chip *ngIf="bot.supports_inline_queries" color="accent" selected>
+                                Inline
+                            </mat-chip>
+                        </mat-chip-listbox>
                     </div>
                 </mat-card-content>
 

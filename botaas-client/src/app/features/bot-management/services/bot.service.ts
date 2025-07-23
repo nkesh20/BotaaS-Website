@@ -25,6 +25,7 @@ export interface BotCreate {
 }
 
 export interface BotUpdate {
+  first_name?: string;
   description?: string;
   short_description?: string;
   is_active?: boolean;

@@ -19,7 +19,6 @@ export interface TelegramBotCreate {
 }
 
 export interface TelegramBotUpdate {
-    username?: string;
     first_name?: string;
     description?: string;
     short_description?: string;
