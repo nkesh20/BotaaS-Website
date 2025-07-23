@@ -164,6 +164,8 @@ import { BotService } from '../../../bot-management/services/bot.service';
   `,
     styles: [`
     .bot-status-card {
+      width: fit-content;
+      max-width: 100%;
       margin: 16px 0;
     }
 

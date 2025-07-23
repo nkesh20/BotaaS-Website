@@ -102,6 +102,10 @@
                         <mat-icon>{{ bot.is_active ? 'pause' : 'play_arrow' }}</mat-icon>
                         {{ bot.is_active ? 'Deactivate' : 'Activate' }}
                     </button>
+                    <button mat-button (click)="onAnalytics(bot)">
+                        <mat-icon>insights</mat-icon>
+                        Analytics
+                    </button>
                     <button mat-button (click)="editBot(bot)">
                         <mat-icon>settings</mat-icon>
                         Settings

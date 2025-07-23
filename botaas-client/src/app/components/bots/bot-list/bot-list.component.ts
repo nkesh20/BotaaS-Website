@@ -158,4 +158,8 @@ export class BotListComponent implements OnInit {
             }
         }
     }
+
+    onAnalytics(bot: any): void {
+        console.log('Analytics clicked for bot:', bot);
+    }
 }
