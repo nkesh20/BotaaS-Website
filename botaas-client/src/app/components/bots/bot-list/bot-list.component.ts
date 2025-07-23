@@ -158,4 +158,8 @@ export class BotListComponent implements OnInit {
             }
         }
     }
+
+    onAnalytics(bot: any): void {
+        this.router.navigate(['/bots', bot.id, 'analytics']);
+    }
 }

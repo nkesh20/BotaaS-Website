@@ -40,6 +40,10 @@ export const routes: Routes = [
                 loadComponent: () => import('./features/bot-management/components/flow-builder/flow-builder.component').then(m => m.FlowBuilderComponent)
             },
             {
+                path: 'bots/:botId/analytics',
+                loadComponent: () => import('./features/bot-management/components/bot-analytics/bot-analytics.component').then(m => m.BotAnalyticsComponent)
+            },
+            {
                 path: 'profile',
                 loadComponent: () => import('./components/dashboard/dashboard.component').then(m => m.DashboardComponent)
             },
