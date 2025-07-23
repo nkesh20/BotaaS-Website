@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, OnDestroy, AfterViewInit, QueryList, ViewChildren } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -27,6 +27,17 @@ interface SimpleEdge {
   label?: string;
   condition?: string;
 }
+
+const EDGE_COLORS = [
+  '#1976d2', // blue
+  '#388e3c', // green
+  '#fbc02d', // yellow
+  '#d32f2f', // red
+  '#7b1fa2', // purple
+  '#0288d1', // light blue
+  '#c2185b', // pink
+  '#ffa000', // orange
+];
 
 @Component({
   selector: 'app-flow-builder',
@@ -110,16 +121,18 @@ interface SimpleEdge {
             <g *ngFor="let edge of validEdges" class="edge">
               <path 
                 [attr.d]="getEdgePath(edge)" 
-                stroke="rgba(153,153,153,0.5)" 
-                stroke-width="1.2"
+                [attr.stroke]="getEdgeColor(edge)" 
+                stroke-width="1.8"
                 fill="none"
-                marker-end="url(#arrowhead)">
+                [attr.marker-end]="'url(#arrowhead-' + getEdgeColorIndex(edge) + ')'"
+                >
               </path>
               <text 
                 [attr.x]="getEdgeLabelPosition(edge).x"
                 [attr.y]="getEdgeLabelPosition(edge).y"
                 text-anchor="middle"
                 class="edge-label"
+                [attr.fill]="getEdgeColor(edge)"
                 (click)="onEdgeLabelClick(edge, $event)"
                 [title]="'Click to edit edge label: ' + (edge.label || 'No label')"
                 style="cursor: pointer;">
@@ -130,10 +143,11 @@ interface SimpleEdge {
 
           <!-- Arrow marker definition -->
           <defs>
-            <marker id="arrowhead" markerWidth="10" markerHeight="7" 
-                    refX="10" refY="3.5" orient="auto">
-              <polygon points="0 0, 10 3.5, 0 7" fill="#999" />
-            </marker>
+            <ng-container *ngFor="let color of edgeColors; let i = index">
+              <marker [attr.id]="'arrowhead-' + i" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" [attr.fill]="color" />
+              </marker>
+            </ng-container>
           </defs>
         </svg>
 
@@ -141,6 +155,7 @@ interface SimpleEdge {
         <div class="nodes">
           <div 
             *ngFor="let node of nodes"
+            #nodeElement
             class="node"
             [class.selected]="selectedNode?.id === node.id"
             [class.connecting]="connectMode && connectingFrom?.id === node.id"
@@ -371,10 +386,11 @@ interface SimpleEdge {
     }
   `]
 })
-export class FlowBuilderComponent implements OnInit, OnDestroy {
+export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('canvas') canvasRef!: ElementRef;
+  @ViewChildren('nodeElement') nodeElements!: QueryList<ElementRef>;
 
-  nodes: SimpleNode[] = [];
+  nodes: (SimpleNode & { width?: number; height?: number })[] = [];
   edges: SimpleEdge[] = [];
   selectedNode: SimpleNode | null = null;
   
@@ -389,6 +405,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
   canvasHeight = 800;
   showDebug = false;
   showDebugPanel = false;
+  edgeColors = EDGE_COLORS;
 
   constructor(
     private botService: BotService,
@@ -416,6 +433,22 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     document.removeEventListener('mousemove', this.onMouseMove.bind(this));
     document.removeEventListener('mouseup', this.onMouseUp.bind(this));
+  }
+
+  ngAfterViewInit() {
+    this.measureAllNodes();
+    this.nodeElements.changes.subscribe(() => this.measureAllNodes());
+  }
+
+  private measureAllNodes() {
+    if (!this.nodeElements) return;
+    this.nodeElements.forEach((elRef, idx) => {
+      const rect = elRef.nativeElement.getBoundingClientRect();
+      if (this.nodes[idx]) {
+        this.nodes[idx].width = rect.width;
+        this.nodes[idx].height = rect.height;
+      }
+    });
   }
 
   initializeDefaultFlow() {
@@ -479,70 +512,57 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Returns the intersection point between a line from (x0, y0) to (x1, y1) and the rectangle centered at (cx, cy) with width w and height h.
-   * Returns the intersection point on the rectangle border closest to (x0, y0).
+   * Returns the intersection point of a line from the center of a rectangle to an external point.
+   * (x0, y0): center of the rectangle
+   * (x1, y1): external point (usually the center of the other rectangle)
+   * (cx, cy, w, h): rectangle's top-left and size
+   * Returns the intersection point on the rectangle border that the line crosses.
    */
-  private getRectIntersection(x0: number, y0: number, x1: number, y1: number, cx: number, cy: number, w: number, h: number) {
-    // Rectangle sides
-    const left = cx;
-    const right = cx + w;
-    const top = cy;
-    const bottom = cy + h;
+  private getRectBorderIntersection(x0: number, y0: number, x1: number, y1: number, cx: number, cy: number, w: number, h: number) {
+    // Rectangle center
+    const center = { x: x0, y: y0 };
     // Direction vector
     const dx = x1 - x0;
     const dy = y1 - y0;
-    let tMin = Infinity;
-    let ix = x1, iy = y1;
-    // Check intersection with each side
-    // Left (x = left)
-    if (dx !== 0) {
-      const t = (left - x0) / dx;
-      const y = y0 + t * dy;
-      if (t > 0 && y >= top && y <= bottom && t < tMin) {
-        tMin = t;
-        ix = left;
-        iy = y;
-      }
+    // Half sizes
+    const hw = w / 2;
+    const hh = h / 2;
+    // Rectangle center
+    const rectCenter = { x: cx + hw, y: cy + hh };
+    // Calculate scale to border
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
+    let scale = 1;
+    if (absDx * hh > absDy * hw) {
+      // Intersection with left/right edge
+      scale = hw / absDx;
+    } else {
+      // Intersection with top/bottom edge
+      scale = hh / absDy;
     }
-    // Right (x = right)
-    if (dx !== 0) {
-      const t = (right - x0) / dx;
-      const y = y0 + t * dy;
-      if (t > 0 && y >= top && y <= bottom && t < tMin) {
-        tMin = t;
-        ix = right;
-        iy = y;
-      }
-    }
-    // Top (y = top)
-    if (dy !== 0) {
-      const t = (top - y0) / dy;
-      const x = x0 + t * dx;
-      if (t > 0 && x >= left && x <= right && t < tMin) {
-        tMin = t;
-        ix = x;
-        iy = top;
-      }
-    }
-    // Bottom (y = bottom)
-    if (dy !== 0) {
-      const t = (bottom - y0) / dy;
-      const x = x0 + t * dx;
-      if (t > 0 && x >= left && x <= right && t < tMin) {
-        tMin = t;
-        ix = x;
-        iy = bottom;
-      }
-    }
-    return { x: ix, y: iy };
+    return {
+      x: center.x + dx * scale,
+      y: center.y + dy * scale
+    };
   }
 
   /**
-   * Returns the index and total count of edges between the same source and target (in either direction).
+   * Returns the index and total count of edges between the same pair of nodes, regardless of direction.
    */
-  private getEdgeMultiIndex(edge: SimpleEdge) {
-    // Only consider edges with the same source and target (directional)
-    const siblings = this.edges.filter(e => e.source === edge.source && e.target === edge.target);
+  private getBidirectionalEdgeMultiIndex(edge: SimpleEdge) {
+    const nodeA = edge.source;
+    const nodeB = edge.target;
+    // Group all edges between nodeA and nodeB, regardless of direction
+    const siblings = this.edges.filter(e =>
+      (e.source === nodeA && e.target === nodeB) ||
+      (e.source === nodeB && e.target === nodeA)
+    );
+    // Sort for consistent ordering: outgoing edges first, then incoming
+    siblings.sort((a, b) => {
+      if (a.source === edge.source && a.target === edge.target) return -1;
+      if (b.source === edge.source && b.target === edge.target) return 1;
+      return 0;
+    });
     const index = siblings.findIndex(e => e.id === edge.id);
     return { index, total: siblings.length };
   }
@@ -551,21 +571,29 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
    * Returns SVG path for a curved edge if needed, or straight if only one edge.
    */
   getEdgePath(edge: SimpleEdge) {
-    const sourceNode = this.getNodeById(edge.source);
-    const targetNode = this.getNodeById(edge.target);
-    const nodeWidth = 120;
-    const nodeHeight = 44;
+    const sourceNode = this.getNodeById(edge.source) as SimpleNode & { width?: number; height?: number };
+    const targetNode = this.getNodeById(edge.target) as SimpleNode & { width?: number; height?: number };
+    const nodeWidthSource = sourceNode?.width || 120;
+    const nodeHeightSource = sourceNode?.height || 44;
+    const nodeWidthTarget = targetNode?.width || 120;
+    const nodeHeightTarget = targetNode?.height || 44;
     if (!sourceNode || !targetNode) return '';
-    // Centers
-    const sourceCenterX = sourceNode.x + nodeWidth / 2;
-    const sourceCenterY = sourceNode.y + nodeHeight / 2;
-    const targetCenterX = targetNode.x + nodeWidth / 2;
-    const targetCenterY = targetNode.y + nodeHeight / 2;
-    // Intersection points
-    const sourceIntersect = this.getRectIntersection(targetCenterX, targetCenterY, sourceCenterX, sourceCenterY, sourceNode.x, sourceNode.y, nodeWidth, nodeHeight);
-    const targetIntersect = this.getRectIntersection(sourceCenterX, sourceCenterY, targetCenterX, targetCenterY, targetNode.x, targetNode.y, nodeWidth, nodeHeight);
-    // Multi-edge offset
-    const { index, total } = this.getEdgeMultiIndex(edge);
+    // Centers (dynamic)
+    const sourceCenterX = sourceNode.x + nodeWidthSource / 2;
+    const sourceCenterY = sourceNode.y + nodeHeightSource / 2;
+    const targetCenterX = targetNode.x + nodeWidthTarget / 2;
+    const targetCenterY = targetNode.y + nodeHeightTarget / 2;
+    // Intersection points: always at the border, on the correct edge
+    const sourceIntersect = this.getRectBorderIntersection(
+      sourceCenterX, sourceCenterY, targetCenterX, targetCenterY,
+      sourceNode.x, sourceNode.y, nodeWidthSource, nodeHeightSource
+    );
+    const targetIntersect = this.getRectBorderIntersection(
+      targetCenterX, targetCenterY, sourceCenterX, sourceCenterY,
+      targetNode.x, targetNode.y, nodeWidthTarget, nodeHeightTarget
+    );
+    // Multi-edge offset (bidirectional)
+    const { index, total } = this.getBidirectionalEdgeMultiIndex(edge);
     let offset = 0;
     if (total > 1) {
       const spacing = 40; // px
@@ -577,34 +605,42 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     const len = Math.sqrt(dx * dx + dy * dy) || 1;
     const nx = -dy / len;
     const ny = dx / len;
-    // Start and end points are the same for all multi-edges
+    // Start and end points are the intersection points
     const sx = sourceIntersect.x;
     const sy = sourceIntersect.y;
     const tx = targetIntersect.x;
     const ty = targetIntersect.y;
     // Control points are offset perpendicularly
-    const c1x = sx + dx / 3 + nx * offset;
-    const c1y = sy + dy / 3 + ny * offset;
-    const c2x = sx + 2 * dx / 3 + nx * offset;
-    const c2y = sy + 2 * dy / 3 + ny * offset;
+    const c1x = sx + (dx / 3) + nx * offset;
+    const c1y = sy + (dy / 3) + ny * offset;
+    const c2x = sx + (2 * dx / 3) + nx * offset;
+    const c2y = sy + (2 * dy / 3) + ny * offset;
     // SVG path
     return `M ${sx} ${sy} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${tx} ${ty}`;
   }
 
   getEdgeLabelPosition(edge: SimpleEdge) {
-    // For label, use the midpoint of the curve (approximate at t=0.5)
-    const sourceNode = this.getNodeById(edge.source);
-    const targetNode = this.getNodeById(edge.target);
-    const nodeWidth = 120;
-    const nodeHeight = 44;
+    // Use the same logic as getEdgePath for offset and control points
+    const sourceNode = this.getNodeById(edge.source) as SimpleNode & { width?: number; height?: number };
+    const targetNode = this.getNodeById(edge.target) as SimpleNode & { width?: number; height?: number };
+    const nodeWidthSource = sourceNode?.width || 120;
+    const nodeHeightSource = sourceNode?.height || 44;
+    const nodeWidthTarget = targetNode?.width || 120;
+    const nodeHeightTarget = targetNode?.height || 44;
     if (!sourceNode || !targetNode) return { x: 0, y: 0 };
-    const sourceCenterX = sourceNode.x + nodeWidth / 2;
-    const sourceCenterY = sourceNode.y + nodeHeight / 2;
-    const targetCenterX = targetNode.x + nodeWidth / 2;
-    const targetCenterY = targetNode.y + nodeHeight / 2;
-    const sourceIntersect = this.getRectIntersection(targetCenterX, targetCenterY, sourceCenterX, sourceCenterY, sourceNode.x, sourceNode.y, nodeWidth, nodeHeight);
-    const targetIntersect = this.getRectIntersection(sourceCenterX, sourceCenterY, targetCenterX, targetCenterY, targetNode.x, targetNode.y, nodeWidth, nodeHeight);
-    const { index, total } = this.getEdgeMultiIndex(edge);
+    const sourceCenterX = sourceNode.x + nodeWidthSource / 2;
+    const sourceCenterY = sourceNode.y + nodeHeightSource / 2;
+    const targetCenterX = targetNode.x + nodeWidthTarget / 2;
+    const targetCenterY = targetNode.y + nodeHeightTarget / 2;
+    const sourceIntersect = this.getRectBorderIntersection(
+      sourceCenterX, sourceCenterY, targetCenterX, targetCenterY,
+      sourceNode.x, sourceNode.y, nodeWidthSource, nodeHeightSource
+    );
+    const targetIntersect = this.getRectBorderIntersection(
+      targetCenterX, targetCenterY, sourceCenterX, sourceCenterY,
+      targetNode.x, targetNode.y, nodeWidthTarget, nodeHeightTarget
+    );
+    const { index, total } = this.getBidirectionalEdgeMultiIndex(edge);
     let offset = 0;
     if (total > 1) {
       const spacing = 40;
@@ -615,16 +651,15 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     const len = Math.sqrt(dx * dx + dy * dy) || 1;
     const nx = -dy / len;
     const ny = dx / len;
-    // Start and end points are the same for all multi-edges
     const sx = sourceIntersect.x;
     const sy = sourceIntersect.y;
     const tx = targetIntersect.x;
     const ty = targetIntersect.y;
-    // Control points are offset perpendicularly
-    const c1x = sx + dx / 3 + nx * offset;
-    const c1y = sy + dy / 3 + ny * offset;
-    const c2x = sx + 2 * dx / 3 + nx * offset;
-    const c2y = sy + 2 * dy / 3 + ny * offset;
+    // Control points are offset perpendicularly (same as getEdgePath)
+    const c1x = sx + (dx / 3) + nx * offset;
+    const c1y = sy + (dy / 3) + ny * offset;
+    const c2x = sx + (2 * dx / 3) + nx * offset;
+    const c2y = sy + (2 * dy / 3) + ny * offset;
     // Bezier midpoint at t=0.5
     const t = 0.5;
     const x = Math.pow(1 - t, 3) * sx + 3 * Math.pow(1 - t, 2) * t * c1x + 3 * (1 - t) * t * t * c2x + Math.pow(t, 3) * tx;
@@ -1006,5 +1041,14 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
   backToFlows() {
     const botId = this.route.snapshot.params['botId'];
     this.router.navigate(['/bots', botId, 'flows']);
+  }
+
+  getEdgeColor(edge: SimpleEdge): string {
+    const { index } = this.getBidirectionalEdgeMultiIndex(edge);
+    return EDGE_COLORS[index % EDGE_COLORS.length];
+  }
+  getEdgeColorIndex(edge: SimpleEdge): number {
+    const { index } = this.getBidirectionalEdgeMultiIndex(edge);
+    return index % EDGE_COLORS.length;
   }
 }
