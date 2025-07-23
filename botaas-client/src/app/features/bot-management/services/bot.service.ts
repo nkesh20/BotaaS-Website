@@ -12,8 +12,6 @@ export interface Bot {
   token: string;
   description?: string;
   short_description?: string;
-  bot_picture_url?: string;
-  description_picture_url?: string;
   is_active: boolean;
   can_join_groups: boolean;
   can_read_all_group_messages: boolean;
@@ -30,8 +28,6 @@ export interface BotUpdate {
   first_name?: string;
   description?: string;
   short_description?: string;
-  bot_picture_url?: string;
-  description_picture_url?: string;
   is_active?: boolean;
   can_join_groups?: boolean;
   can_read_all_group_messages?: boolean;

@@ -40,10 +40,7 @@
             <mat-card class="bot-card">
                 <mat-card-header>
                     <div mat-card-avatar class="bot-avatar">
-                        <img *ngIf="bot.bot_picture_url; else defaultIcon" [src]="bot.bot_picture_url" [alt]="bot.first_name" class="bot-image" (error)="onBotImageError($event)">
-                        <ng-template #defaultIcon>
-                            <mat-icon>smart_toy</mat-icon>
-                        </ng-template>
+                        <mat-icon>smart_toy</mat-icon>
                     </div>
                     <mat-card-title>{{ bot.first_name }}</mat-card-title>
                     <mat-card-subtitle>{{ bot.username }}</mat-card-subtitle>

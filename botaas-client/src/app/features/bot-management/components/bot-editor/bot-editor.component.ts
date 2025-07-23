@@ -48,32 +48,6 @@ import { BotService } from '../../services/bot.service';
           </div>
         </div>
 
-        <!-- Images -->
-        <div class="form-section" *ngIf="isEditing">
-          <h3>Images</h3>
-          
-          <div class="form-group">
-            <label for="botPicture">Bot Profile Picture URL</label>
-            <input id="botPicture" type="url" formControlName="bot_picture_url" class="form-control" placeholder="https://example.com/bot-avatar.jpg">
-            <small class="help-text">URL to your bot's profile picture</small>
-            <div class="note-warning">
-              <strong>Note:</strong> Bot profile pictures must be set through <a href="https://t.me/BotFather" target="_blank">&#64;BotFather</a> on Telegram. This field is for your reference only.
-            </div>
-            <div class="image-preview" *ngIf="botForm.get('bot_picture_url')?.value">
-              <img [src]="botForm.get('bot_picture_url')?.value" alt="Bot Picture Preview" (error)="onImageError($event)">
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="descriptionPicture">Description Picture URL</label>
-            <input id="descriptionPicture" type="url" formControlName="description_picture_url" class="form-control" placeholder="https://example.com/description-image.jpg">
-            <small class="help-text">URL to an image that describes your bot</small>
-            <div class="image-preview" *ngIf="botForm.get('description_picture_url')?.value">
-              <img [src]="botForm.get('description_picture_url')?.value" alt="Description Picture Preview" (error)="onImageError($event)">
-            </div>
-          </div>
-        </div>
-
         <!-- Bot Settings -->
         <div class="form-section" *ngIf="isEditing">
           <h3>Bot Settings</h3>
@@ -266,8 +240,6 @@ export class BotEditorComponent implements OnInit {
       first_name: [''],
       description: [''],
       short_description: [''],
-      bot_picture_url: [''],
-      description_picture_url: [''],
       can_join_groups: [true],
       can_read_all_group_messages: [false],
       supports_inline_queries: [false]
@@ -294,8 +266,6 @@ export class BotEditorComponent implements OnInit {
             first_name: bot.first_name,
             description: bot.description,
             short_description: bot.short_description,
-            bot_picture_url: bot.bot_picture_url,
-            description_picture_url: bot.description_picture_url,
             can_join_groups: bot.can_join_groups,
             can_read_all_group_messages: bot.can_read_all_group_messages,
             supports_inline_queries: bot.supports_inline_queries
@@ -347,8 +317,6 @@ export class BotEditorComponent implements OnInit {
             first_name: updatedBot.first_name,
             description: updatedBot.description,
             short_description: updatedBot.short_description,
-            bot_picture_url: updatedBot.bot_picture_url,
-            description_picture_url: updatedBot.description_picture_url,
             can_join_groups: updatedBot.can_join_groups,
             can_read_all_group_messages: updatedBot.can_read_all_group_messages,
             supports_inline_queries: updatedBot.supports_inline_queries
