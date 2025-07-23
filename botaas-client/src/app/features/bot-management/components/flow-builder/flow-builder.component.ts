@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, OnDestroy, AfterViewInit, QueryList, ViewChildren } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -141,6 +141,7 @@ interface SimpleEdge {
         <div class="nodes">
           <div 
             *ngFor="let node of nodes"
+            #nodeElement
             class="node"
             [class.selected]="selectedNode?.id === node.id"
             [class.connecting]="connectMode && connectingFrom?.id === node.id"
@@ -371,10 +372,11 @@ interface SimpleEdge {
     }
   `]
 })
-export class FlowBuilderComponent implements OnInit, OnDestroy {
+export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('canvas') canvasRef!: ElementRef;
+  @ViewChildren('nodeElement') nodeElements!: QueryList<ElementRef>;
 
-  nodes: SimpleNode[] = [];
+  nodes: (SimpleNode & { width?: number; height?: number })[] = [];
   edges: SimpleEdge[] = [];
   selectedNode: SimpleNode | null = null;
   
@@ -416,6 +418,22 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     document.removeEventListener('mousemove', this.onMouseMove.bind(this));
     document.removeEventListener('mouseup', this.onMouseUp.bind(this));
+  }
+
+  ngAfterViewInit() {
+    this.measureAllNodes();
+    this.nodeElements.changes.subscribe(() => this.measureAllNodes());
+  }
+
+  private measureAllNodes() {
+    if (!this.nodeElements) return;
+    this.nodeElements.forEach((elRef, idx) => {
+      const rect = elRef.nativeElement.getBoundingClientRect();
+      if (this.nodes[idx]) {
+        this.nodes[idx].width = rect.width;
+        this.nodes[idx].height = rect.height;
+      }
+    });
   }
 
   initializeDefaultFlow() {
@@ -479,62 +497,38 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Returns the intersection point between a line from (x0, y0) to (x1, y1) and the rectangle centered at (cx, cy) with width w and height h.
-   * Returns the intersection point on the rectangle border closest to (x0, y0).
+   * Returns the intersection point of a line from the center of a rectangle to an external point.
+   * (x0, y0): center of the rectangle
+   * (x1, y1): external point (usually the center of the other rectangle)
+   * (cx, cy, w, h): rectangle's top-left and size
+   * Returns the intersection point on the rectangle border that the line crosses.
    */
-  private getRectIntersection(x0: number, y0: number, x1: number, y1: number, cx: number, cy: number, w: number, h: number) {
-    // Rectangle sides
-    const left = cx;
-    const right = cx + w;
-    const top = cy;
-    const bottom = cy + h;
+  private getRectBorderIntersection(x0: number, y0: number, x1: number, y1: number, cx: number, cy: number, w: number, h: number) {
+    // Rectangle center
+    const center = { x: x0, y: y0 };
     // Direction vector
     const dx = x1 - x0;
     const dy = y1 - y0;
-    let tMin = Infinity;
-    let ix = x1, iy = y1;
-    // Check intersection with each side
-    // Left (x = left)
-    if (dx !== 0) {
-      const t = (left - x0) / dx;
-      const y = y0 + t * dy;
-      if (t > 0 && y >= top && y <= bottom && t < tMin) {
-        tMin = t;
-        ix = left;
-        iy = y;
-      }
+    // Half sizes
+    const hw = w / 2;
+    const hh = h / 2;
+    // Rectangle center
+    const rectCenter = { x: cx + hw, y: cy + hh };
+    // Calculate scale to border
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
+    let scale = 1;
+    if (absDx * hh > absDy * hw) {
+      // Intersection with left/right edge
+      scale = hw / absDx;
+    } else {
+      // Intersection with top/bottom edge
+      scale = hh / absDy;
     }
-    // Right (x = right)
-    if (dx !== 0) {
-      const t = (right - x0) / dx;
-      const y = y0 + t * dy;
-      if (t > 0 && y >= top && y <= bottom && t < tMin) {
-        tMin = t;
-        ix = right;
-        iy = y;
-      }
-    }
-    // Top (y = top)
-    if (dy !== 0) {
-      const t = (top - y0) / dy;
-      const x = x0 + t * dx;
-      if (t > 0 && x >= left && x <= right && t < tMin) {
-        tMin = t;
-        ix = x;
-        iy = top;
-      }
-    }
-    // Bottom (y = bottom)
-    if (dy !== 0) {
-      const t = (bottom - y0) / dy;
-      const x = x0 + t * dx;
-      if (t > 0 && x >= left && x <= right && t < tMin) {
-        tMin = t;
-        ix = x;
-        iy = bottom;
-      }
-    }
-    return { x: ix, y: iy };
+    return {
+      x: center.x + dx * scale,
+      y: center.y + dy * scale
+    };
   }
 
   /**
@@ -551,19 +545,27 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
    * Returns SVG path for a curved edge if needed, or straight if only one edge.
    */
   getEdgePath(edge: SimpleEdge) {
-    const sourceNode = this.getNodeById(edge.source);
-    const targetNode = this.getNodeById(edge.target);
-    const nodeWidth = 120;
-    const nodeHeight = 44;
+    const sourceNode = this.getNodeById(edge.source) as SimpleNode & { width?: number; height?: number };
+    const targetNode = this.getNodeById(edge.target) as SimpleNode & { width?: number; height?: number };
+    const nodeWidthSource = sourceNode?.width || 120;
+    const nodeHeightSource = sourceNode?.height || 44;
+    const nodeWidthTarget = targetNode?.width || 120;
+    const nodeHeightTarget = targetNode?.height || 44;
     if (!sourceNode || !targetNode) return '';
-    // Centers
-    const sourceCenterX = sourceNode.x + nodeWidth / 2;
-    const sourceCenterY = sourceNode.y + nodeHeight / 2;
-    const targetCenterX = targetNode.x + nodeWidth / 2;
-    const targetCenterY = targetNode.y + nodeHeight / 2;
-    // Intersection points
-    const sourceIntersect = this.getRectIntersection(targetCenterX, targetCenterY, sourceCenterX, sourceCenterY, sourceNode.x, sourceNode.y, nodeWidth, nodeHeight);
-    const targetIntersect = this.getRectIntersection(sourceCenterX, sourceCenterY, targetCenterX, targetCenterY, targetNode.x, targetNode.y, nodeWidth, nodeHeight);
+    // Centers (dynamic)
+    const sourceCenterX = sourceNode.x + nodeWidthSource / 2;
+    const sourceCenterY = sourceNode.y + nodeHeightSource / 2;
+    const targetCenterX = targetNode.x + nodeWidthTarget / 2;
+    const targetCenterY = targetNode.y + nodeHeightTarget / 2;
+    // Intersection points: always at the border, on the correct edge
+    const sourceIntersect = this.getRectBorderIntersection(
+      sourceCenterX, sourceCenterY, targetCenterX, targetCenterY,
+      sourceNode.x, sourceNode.y, nodeWidthSource, nodeHeightSource
+    );
+    const targetIntersect = this.getRectBorderIntersection(
+      targetCenterX, targetCenterY, sourceCenterX, sourceCenterY,
+      targetNode.x, targetNode.y, nodeWidthTarget, nodeHeightTarget
+    );
     // Multi-edge offset
     const { index, total } = this.getEdgeMultiIndex(edge);
     let offset = 0;
@@ -577,16 +579,16 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     const len = Math.sqrt(dx * dx + dy * dy) || 1;
     const nx = -dy / len;
     const ny = dx / len;
-    // Start and end points are the same for all multi-edges
+    // Start and end points are the intersection points
     const sx = sourceIntersect.x;
     const sy = sourceIntersect.y;
     const tx = targetIntersect.x;
     const ty = targetIntersect.y;
     // Control points are offset perpendicularly
-    const c1x = sx + dx / 3 + nx * offset;
-    const c1y = sy + dy / 3 + ny * offset;
-    const c2x = sx + 2 * dx / 3 + nx * offset;
-    const c2y = sy + 2 * dy / 3 + ny * offset;
+    const c1x = sx + (dx / 3) + nx * offset;
+    const c1y = sy + (dy / 3) + ny * offset;
+    const c2x = sx + (2 * dx / 3) + nx * offset;
+    const c2y = sy + (2 * dy / 3) + ny * offset;
     // SVG path
     return `M ${sx} ${sy} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${tx} ${ty}`;
   }
@@ -602,8 +604,8 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     const sourceCenterY = sourceNode.y + nodeHeight / 2;
     const targetCenterX = targetNode.x + nodeWidth / 2;
     const targetCenterY = targetNode.y + nodeHeight / 2;
-    const sourceIntersect = this.getRectIntersection(targetCenterX, targetCenterY, sourceCenterX, sourceCenterY, sourceNode.x, sourceNode.y, nodeWidth, nodeHeight);
-    const targetIntersect = this.getRectIntersection(sourceCenterX, sourceCenterY, targetCenterX, targetCenterY, targetNode.x, targetNode.y, nodeWidth, nodeHeight);
+    const sourceIntersect = this.getRectBorderIntersection(targetCenterX, targetCenterY, sourceCenterX, sourceCenterY, sourceNode.x, sourceNode.y, nodeWidth, nodeHeight);
+    const targetIntersect = this.getRectBorderIntersection(sourceCenterX, sourceCenterY, targetCenterX, targetCenterY, targetNode.x, targetNode.y, nodeWidth, nodeHeight);
     const { index, total } = this.getEdgeMultiIndex(edge);
     let offset = 0;
     if (total > 1) {
