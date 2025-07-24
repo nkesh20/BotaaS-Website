@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, OnDestroy, AfterViewInit, QueryList, ViewChildren } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, OnDestroy, AfterViewInit, QueryList, ViewChildren, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -159,6 +159,7 @@ const EDGE_COLORS = [
             class="node"
             [class.selected]="selectedNode?.id === node.id"
             [class.connecting]="connectMode && connectingFrom?.id === node.id"
+            [class.node-error]="nodeErrorStates[node.id]"
             [style.left.px]="node.x"
             [style.top.px]="node.y"
             (click)="onNodeClick(node)"
@@ -285,6 +286,11 @@ const EDGE_COLORS = [
       background: #f1f8e9;
     }
 
+    .node.node-error {
+      border-color: #d32f2f !important;
+      box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.3);
+    }
+
     .node-icon {
       font-size: 20px;
       width: 20px;
@@ -396,6 +402,9 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
   
   connectMode = false;
   connectingFrom: SimpleNode | null = null;
+
+  // Add error state tracking for nodes
+  nodeErrorStates: { [nodeId: string]: boolean } = {};
   
   isDragging = false;
   dragOffset = { x: 0, y: 0 };
@@ -412,7 +421,8 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
     public route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef // Inject ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -695,23 +705,72 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
       this.wasDragging = false;
       return;
     }
-    if (this.connectMode) {
-      if (!this.connectingFrom) {
-        this.connectingFrom = node;
-      } else if (this.connectingFrom.id !== node.id) {
-        // Create connection
-        const newEdge: SimpleEdge = {
-          id: `edge-${Date.now()}`,
-          source: this.connectingFrom.id,
-          target: node.id,
-          label: 'Next'
-        };
-        this.edges = [...this.edges, newEdge];
-        this.snackBar.open(`Connected ${this.connectingFrom.label} → ${node.label}`, 'Close', { duration: 2000 });
-        this.connectingFrom = null;
-        this.connectMode = false;
+    // --- CONNECT MODE: Selecting source node ---
+    if (this.connectMode && !this.connectingFrom) {
+      // If Input node and already has outgoing edge, show error and do not enter connect mode
+      if (node.data?.type === 'input') {
+        const outgoingEdges = this.edges.filter(e => e.source === node.id);
+        if (outgoingEdges.length >= 1) {
+          this.snackBar.open('Input node can only have one outgoing edge.', 'Close', { duration: 3000 });
+          this.nodeErrorStates[node.id] = true;
+          this.cdr.detectChanges();
+          setTimeout(() => {
+            this.nodeErrorStates[node.id] = false;
+            this.cdr.detectChanges();
+          }, 1000);
+          return;
+        }
       }
-    } else {
+      this.connectingFrom = node;
+      return;
+    }
+    // --- CONNECT MODE: Selecting target node ---
+    if (this.connectMode && this.connectingFrom && this.connectingFrom.id !== node.id) {
+      // Restriction: Input node can have only one outgoing edge (for source)
+      const fromNode = this.connectingFrom;
+      if (fromNode.data?.type === 'input') {
+        const outgoingEdges = this.edges.filter(e => e.source === fromNode.id);
+        if (outgoingEdges.length >= 1) {
+          this.snackBar.open('Input node can only have one outgoing edge.', 'Close', { duration: 3000 });
+          this.nodeErrorStates[fromNode.id] = true;
+          this.cdr.detectChanges();
+          setTimeout(() => {
+            this.nodeErrorStates[fromNode.id] = false;
+            this.cdr.detectChanges();
+          }, 1000);
+          this.connectingFrom = null;
+          this.connectMode = false;
+          return;
+        }
+      }
+      // Create connection
+      const newEdge: SimpleEdge = {
+        id: `edge-${Date.now()}`,
+        source: this.connectingFrom.id,
+        target: node.id,
+        label: 'Next'
+      };
+      this.edges = [...this.edges, newEdge];
+      this.snackBar.open(`Connected ${this.connectingFrom.label} → ${node.label}`, 'Close', { duration: 2000 });
+      this.connectingFrom = null;
+      this.connectMode = false;
+      return;
+    }
+    // --- NOT IN CONNECT MODE ---
+    if (!this.connectMode) {
+      if (node.data?.type === 'input') {
+        const outgoingEdges = this.edges.filter(e => e.source === node.id);
+        if (outgoingEdges.length >= 1) {
+          this.snackBar.open('Input node can only have one outgoing edge.', 'Close', { duration: 3000 });
+          this.nodeErrorStates[node.id] = true;
+          this.cdr.detectChanges();
+          setTimeout(() => {
+            this.nodeErrorStates[node.id] = false;
+            this.cdr.detectChanges();
+          }, 1000);
+          return;
+        }
+      }
       this.selectedNode = node;
       this.openNodeEditor(node);
     }
