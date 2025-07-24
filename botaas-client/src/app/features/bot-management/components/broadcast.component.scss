@@ -1,0 +1,40 @@
+.broadcast-form {
+  max-width: 600px;
+  margin: 2rem auto;
+}
+
+mat-card {
+  padding: 2rem 1.5rem;
+  border-radius: 16px;
+}
+
+mat-card-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.form-group, .form-row {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  flex-direction: column;
+}
+
+.full-width {
+  width: 100%;
+}
+
+mat-card-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+mat-progress-spinner {
+  vertical-align: middle;
+  margin-right: 8px;
+} 

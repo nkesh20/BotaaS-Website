@@ -57,4 +57,8 @@ export class DashboardComponent implements OnInit {
   addNewBot(): void {
     this.router.navigate(['/bots/add']);
   }
+
+  navigateToBroadcast(): void {
+    this.router.navigate(['/broadcast']);
+  }
 }
