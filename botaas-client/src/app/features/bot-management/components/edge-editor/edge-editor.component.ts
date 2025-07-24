@@ -44,6 +44,10 @@ interface EdgeData {
             <mat-card-title>Edge Properties</mat-card-title>
           </mat-card-header>
           <mat-card-content>
+            <div *ngIf="isSingleOutgoingEdge" class="auto-routing-info">
+              <mat-icon color="primary" style="vertical-align: middle;">info</mat-icon>
+              <span><strong>Automatic Routing:</strong> This node has only one outgoing edge. It will be used automatically, so the label is set to "Next" and no condition is required.</span>
+            </div>
             <div class="edge-info">
               <p><strong>From:</strong> {{ data.edge.source }}</p>
               <p><strong>To:</strong> {{ data.edge.target }}</p>
@@ -51,13 +55,13 @@ interface EdgeData {
 
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Edge Label</mat-label>
-              <input matInput formControlName="label" placeholder="Enter edge label (e.g., 'Services', 'Support')">
+              <input matInput formControlName="label" placeholder="Enter edge label (e.g., 'Services', 'Support')" [disabled]="isSingleOutgoingEdge">
               <mat-hint>This label must EXACTLY match the quick reply button text or user input for proper routing</mat-hint>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Condition (Optional)</mat-label>
-              <input matInput formControlName="condition" placeholder="Enter condition (e.g., 'true', 'false')">
+              <input matInput formControlName="condition" placeholder="Enter condition (e.g., 'true', 'false')" [disabled]="isSingleOutgoingEdge">
               <mat-hint>Used for conditional routing. Leave empty for default routing.</mat-hint>
             </mat-form-field>
 
@@ -135,15 +139,38 @@ interface EdgeData {
       max-height: 70vh;
       overflow-y: auto;
     }
+    .auto-routing-info {
+      display: flex;
+      align-items: flex-start;
+      background: #e3f2fd;
+      color: #1976d2;
+      border-radius: 4px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      font-size: 15px;
+      gap: 12px;
+      min-width: 0;
+      box-sizing: border-box;
+      word-break: break-word;
+    }
+    .auto-routing-info mat-icon {
+      flex-shrink: 0;
+      min-width: 24px;
+      min-height: 24px;
+      font-size: 24px;
+      margin-right: 4px;
+      margin-top: 2px;
+    }
   `]
 })
 export class EdgeEditorComponent implements OnInit {
   edgeForm: FormGroup;
+  isSingleOutgoingEdge: boolean = false;
 
   constructor(
     private fb: FormBuilder,
     public dialogRef: MatDialogRef<EdgeEditorComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { edge: EdgeData }
+    @Inject(MAT_DIALOG_DATA) public data: { edge: EdgeData, outgoingEdgeCount?: number }
   ) {
     this.edgeForm = this.fb.group({
       label: ['', Validators.required],
@@ -152,26 +179,37 @@ export class EdgeEditorComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.isSingleOutgoingEdge = this.data.outgoingEdgeCount === 1;
     this.loadEdgeData();
   }
 
   loadEdgeData() {
     const edge = this.data.edge;
-    this.edgeForm.patchValue({
-      label: edge.label || '',
-      condition: edge.condition || ''
-    });
+    if (this.isSingleOutgoingEdge) {
+      this.edgeForm.patchValue({
+        label: 'Next',
+        condition: ''
+      });
+      this.edgeForm.get('label')?.disable();
+      this.edgeForm.get('condition')?.disable();
+    } else {
+      this.edgeForm.patchValue({
+        label: edge.label || '',
+        condition: edge.condition || ''
+      });
+      this.edgeForm.get('label')?.enable();
+      this.edgeForm.get('condition')?.enable();
+    }
   }
 
   onSubmit() {
-    if (this.edgeForm.valid) {
-      const formValue = this.edgeForm.value;
+    if (this.edgeForm.valid || this.isSingleOutgoingEdge) {
+      const formValue = this.edgeForm.getRawValue();
       const result = {
         ...this.data.edge,
-        label: formValue.label,
-        condition: formValue.condition || undefined
+        label: this.isSingleOutgoingEdge ? 'Next' : formValue.label,
+        condition: this.isSingleOutgoingEdge ? '' : (formValue.condition || undefined)
       };
-
       this.dialogRef.close(result);
     }
   }

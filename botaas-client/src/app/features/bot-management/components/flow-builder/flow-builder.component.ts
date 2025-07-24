@@ -817,9 +817,12 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
 
   openEdgeEditor(edge: SimpleEdge) {
     try {
+      // Find all outgoing edges from the same source node
+      const outgoingEdges = this.edges.filter(e => e.source === edge.source);
+      const outgoingEdgeCount = outgoingEdges.length;
       const dialogRef = this.dialog.open(EdgeEditorComponent, {
-        width: '500px',
-        data: { edge: edge },
+        width: '700px',
+        data: { edge: edge, outgoingEdgeCount },
         disableClose: false
       });
 
