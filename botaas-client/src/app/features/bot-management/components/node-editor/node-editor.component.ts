@@ -115,10 +115,10 @@ interface NodeData {
                 <mat-select formControlName="conditionType">
                   <mat-option value="equals">Equals</mat-option>
                   <mat-option value="contains">Contains</mat-option>
-                  <mat-option value="number">Number</mat-option>
-                  <mat-option value="email">Email</mat-option>
-                  <mat-option value="phone_number">Phone Number</mat-option>
-                  <mat-option value="date">Date</mat-option>
+                  <mat-option value="number">Is Number</mat-option>
+                  <mat-option value="email">Is Email</mat-option>
+                  <mat-option value="phone_number">Is Phone Number</mat-option>
+                  <mat-option value="date">Is Date</mat-option>
                   <mat-option value="regex">Regular Expression</mat-option>
                 </mat-select>
               </mat-form-field>
