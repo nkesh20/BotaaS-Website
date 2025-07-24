@@ -201,11 +201,6 @@ interface NodeData {
                 <input matInput formControlName="inputVariableName" placeholder="Enter variable name to store input">
               </mat-form-field>
 
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Validation Pattern (Optional)</mat-label>
-                <input matInput formControlName="inputValidationPattern" 
-                       placeholder="Enter regex pattern for validation">
-              </mat-form-field>
             </div>
 
             <!-- End Node Settings -->
@@ -301,7 +296,6 @@ export class NodeEditorComponent implements OnInit {
       webhookBody: ['{}'],
       inputType: ['text'],
       inputVariableName: [''],
-      inputValidationPattern: [''],
       endMessage: ['']
     });
 
@@ -333,7 +327,6 @@ export class NodeEditorComponent implements OnInit {
       webhookBody: data.request_body || '{}',
       inputType: data.input_type || 'text',
       inputVariableName: data.variable_name || '',
-      inputValidationPattern: data.validation_pattern || '',
       endMessage: data.content || ''
     });
 
@@ -387,7 +380,6 @@ export class NodeEditorComponent implements OnInit {
       this.nodeForm.patchValue({
         inputType: 'text',
         inputVariableName: '',
-        inputValidationPattern: ''
       });
     }
     
@@ -509,7 +501,6 @@ export class NodeEditorComponent implements OnInit {
         case 'input':
           nodeData.input_type = formValue.inputType;
           nodeData.variable_name = formValue.inputVariableName;
-          nodeData.validation_pattern = formValue.inputValidationPattern;
           break;
         case 'end':
           nodeData.content = formValue.endMessage;
