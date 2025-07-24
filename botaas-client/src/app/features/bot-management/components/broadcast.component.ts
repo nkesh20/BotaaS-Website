@@ -73,4 +73,20 @@ export class BroadcastComponent implements OnInit {
       }
     });
   }
+
+  insertVariable(variable: string) {
+    const textarea: HTMLTextAreaElement | null = document.querySelector('textarea[formControlName="text"]');
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const value = this.broadcastForm.get('text')?.value || '';
+    const insertText = `{{${variable}}}`;
+    const newValue = value.slice(0, start) + insertText + value.slice(end);
+    this.broadcastForm.get('text')?.setValue(newValue);
+    // Move cursor after inserted variable
+    setTimeout(() => {
+      textarea.focus();
+      textarea.selectionStart = textarea.selectionEnd = start + insertText.length;
+    });
+  }
 } 

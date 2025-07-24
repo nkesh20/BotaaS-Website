@@ -10,6 +10,12 @@
           </mat-select>
         </mat-form-field>
       </div>
+      <div class="variables-info">
+        <span>Available variables:</span>
+        <button mat-stroked-button type="button" (click)="insertVariable('first_name')">{{'{{first_name}}'}}</button>
+        <button mat-stroked-button type="button" (click)="insertVariable('last_name')">{{'{{last_name}}'}}</button>
+        <button mat-stroked-button type="button" (click)="insertVariable('telegram_username')">{{'{{telegram_username}}'}}</button>
+      </div>
       <div class="form-group">
         <mat-form-field appearance="fill" class="full-width">
           <mat-label>Message</mat-label>
