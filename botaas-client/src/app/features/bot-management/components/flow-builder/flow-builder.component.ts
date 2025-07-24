@@ -724,6 +724,12 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
       this.connectingFrom = node;
       return;
     }
+    // --- CONNECT MODE: Clicking the same node again cancels source selection but stays in connect mode ---
+    if (this.connectMode && this.connectingFrom && this.connectingFrom.id === node.id) {
+      this.connectingFrom = null;
+      // Do not set connectMode = false; stay in connect mode
+      return;
+    }
     // --- CONNECT MODE: Selecting target node ---
     if (this.connectMode && this.connectingFrom && this.connectingFrom.id !== node.id) {
       // Restriction: Input node can have only one outgoing edge (for source)
