@@ -498,7 +498,8 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
           id: edge.id,
           source: edge.source,
           target: edge.target,
-          label: edge.label || ''
+          label: edge.label,
+          condition: edge.condition
         }));
       },
       error: (error) => {
@@ -957,7 +958,8 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
               id: edge.id,
               source: edge.source,
               target: edge.target,
-              label: edge.label
+              label: edge.label,
+              condition: edge.condition
             })),
             triggers: [],
             variables: {}
@@ -995,7 +997,8 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
           id: edge.id,
           source: edge.source,
           target: edge.target,
-          label: edge.label
+          label: edge.label,
+          condition: edge.condition
         })),
         triggers: [],
         variables: {}

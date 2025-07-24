@@ -113,8 +113,12 @@ interface NodeData {
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Condition Type</mat-label>
                 <mat-select formControlName="conditionType">
-                  <mat-option value="contains">Contains</mat-option>
                   <mat-option value="equals">Equals</mat-option>
+                  <mat-option value="contains">Contains</mat-option>
+                  <mat-option value="number">Number</mat-option>
+                  <mat-option value="email">Email</mat-option>
+                  <mat-option value="phone_number">Phone Number</mat-option>
+                  <mat-option value="date">Date</mat-option>
                   <mat-option value="regex">Regular Expression</mat-option>
                 </mat-select>
               </mat-form-field>
@@ -307,6 +311,7 @@ export class NodeEditorComponent implements OnInit {
   ngOnInit() {
     this.loadNodeData();
     this.setupTypeChangeListener();
+    this.setupConditionValidators();
   }
 
   loadNodeData() {
@@ -393,6 +398,31 @@ export class NodeEditorComponent implements OnInit {
     }
   }
 
+  setupConditionValidators() {
+    // Listen for type changes to apply validators dynamically
+    this.nodeForm.get('type')?.valueChanges.subscribe(type => {
+      if (type === 'condition') {
+        this.nodeForm.get('conditionType')?.setValidators([Validators.required]);
+        this.nodeForm.get('conditionValue')?.setValidators([Validators.required]);
+      } else {
+        this.nodeForm.get('conditionType')?.clearValidators();
+        this.nodeForm.get('conditionValue')?.clearValidators();
+      }
+      this.nodeForm.get('conditionType')?.updateValueAndValidity();
+      this.nodeForm.get('conditionValue')?.updateValueAndValidity();
+    });
+    // Also run once on init
+    if (this.nodeForm.get('type')?.value === 'condition') {
+      this.nodeForm.get('conditionType')?.setValidators([Validators.required]);
+      this.nodeForm.get('conditionValue')?.setValidators([Validators.required]);
+    } else {
+      this.nodeForm.get('conditionType')?.clearValidators();
+      this.nodeForm.get('conditionValue')?.clearValidators();
+    }
+    this.nodeForm.get('conditionType')?.updateValueAndValidity();
+    this.nodeForm.get('conditionValue')?.updateValueAndValidity();
+  }
+
   addQuickReply() {
     this.quickReplies.push(new FormControl(''));
     // Force change detection
@@ -457,6 +487,7 @@ export class NodeEditorComponent implements OnInit {
           }
           break;
         case 'condition':
+          // Always include both fields, even if empty (should be validated)
           nodeData.condition_type = formValue.conditionType;
           nodeData.condition_value = formValue.conditionValue;
           break;
