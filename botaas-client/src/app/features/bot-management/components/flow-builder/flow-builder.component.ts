@@ -767,13 +767,16 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
       if (node.data?.type === 'input') {
         const outgoingEdges = this.edges.filter(e => e.source === node.id);
         if (outgoingEdges.length >= 1) {
-          this.snackBar.open('Input node can only have one outgoing edge.', 'Close', { duration: 3000 });
+          // Only show red border, do not show snackbar
           this.nodeErrorStates[node.id] = true;
           this.cdr.detectChanges();
           setTimeout(() => {
             this.nodeErrorStates[node.id] = false;
             this.cdr.detectChanges();
           }, 1000);
+          // Still allow opening the node editor
+          this.selectedNode = node;
+          this.openNodeEditor(node);
           return;
         }
       }
