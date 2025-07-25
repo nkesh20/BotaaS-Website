@@ -51,13 +51,13 @@ interface EdgeData {
 
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Edge Label</mat-label>
-              <input matInput formControlName="label" placeholder="Enter edge label (e.g., 'Services', 'Support')" [disabled]="isSingleOutgoingEdge">
+              <input matInput formControlName="label" placeholder="Enter edge label (e.g., 'Services', 'Support')">
               <mat-hint>Label for this edge (e.g., button text or route name)</mat-hint>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Condition (Optional)</mat-label>
-              <input matInput formControlName="condition" placeholder="Enter condition (e.g., 'true', 'false')" [disabled]="isSingleOutgoingEdge">
+              <input matInput formControlName="condition" placeholder="Enter condition (e.g., 'true', 'false')">
               <mat-hint>Used for conditional routing. Leave empty for default routing.</mat-hint>
             </mat-form-field>
 
@@ -160,7 +160,7 @@ interface EdgeData {
 })
 export class EdgeEditorComponent implements OnInit {
   edgeForm: FormGroup;
-  isSingleOutgoingEdge: boolean = false;
+  // REMOVED: isSingleOutgoingEdge: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -174,7 +174,7 @@ export class EdgeEditorComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.isSingleOutgoingEdge = this.data.outgoingEdgeCount === 1;
+    // REMOVED: this.isSingleOutgoingEdge = this.data.outgoingEdgeCount === 1;
     this.loadEdgeData();
   }
 

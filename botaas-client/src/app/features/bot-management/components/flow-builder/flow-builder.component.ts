@@ -159,7 +159,6 @@ const EDGE_COLORS = [
             class="node"
             [class.selected]="selectedNode?.id === node.id"
             [class.connecting]="connectMode && connectingFrom?.id === node.id"
-            [class.node-error]="nodeErrorStates[node.id]"
             [style.left.px]="node.x"
             [style.top.px]="node.y"
             (click)="onNodeClick(node)"
@@ -286,11 +285,6 @@ const EDGE_COLORS = [
       background: #f1f8e9;
     }
 
-    .node.node-error {
-      border-color: #d32f2f !important;
-      box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.3);
-    }
-
     .node-icon {
       font-size: 20px;
       width: 20px;
@@ -403,9 +397,6 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
   connectMode = false;
   connectingFrom: SimpleNode | null = null;
 
-  // Add error state tracking for nodes
-  nodeErrorStates: { [nodeId: string]: boolean } = {};
-  
   isDragging = false;
   dragOffset = { x: 0, y: 0 };
   wasDragging = false;
@@ -707,20 +698,8 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
     }
     // --- CONNECT MODE: Selecting source node ---
     if (this.connectMode && !this.connectingFrom) {
-      // If Input node and already has outgoing edge, show error and do not enter connect mode
-      if (node.data?.type === 'input') {
-        const outgoingEdges = this.edges.filter(e => e.source === node.id);
-        if (outgoingEdges.length >= 1) {
-          this.snackBar.open('Input node can only have one outgoing edge.', 'Close', { duration: 3000 });
-          this.nodeErrorStates[node.id] = true;
-          this.cdr.detectChanges();
-          setTimeout(() => {
-            this.nodeErrorStates[node.id] = false;
-            this.cdr.detectChanges();
-          }, 1000);
-          return;
-        }
-      }
+      // REMOVE: If Input node and already has outgoing edge, show error and do not enter connect mode
+      // (No restriction here anymore)
       this.connectingFrom = node;
       return;
     }
@@ -732,23 +711,8 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
     }
     // --- CONNECT MODE: Selecting target node ---
     if (this.connectMode && this.connectingFrom && this.connectingFrom.id !== node.id) {
-      // Restriction: Input node can have only one outgoing edge (for source)
-      const fromNode = this.connectingFrom;
-      if (fromNode.data?.type === 'input') {
-        const outgoingEdges = this.edges.filter(e => e.source === fromNode.id);
-        if (outgoingEdges.length >= 1) {
-          this.snackBar.open('Input node can only have one outgoing edge.', 'Close', { duration: 3000 });
-          this.nodeErrorStates[fromNode.id] = true;
-          this.cdr.detectChanges();
-          setTimeout(() => {
-            this.nodeErrorStates[fromNode.id] = false;
-            this.cdr.detectChanges();
-          }, 1000);
-          this.connectingFrom = null;
-          this.connectMode = false;
-          return;
-        }
-      }
+      // REMOVE: Restriction: Input node can have only one outgoing edge (for source)
+      // (No restriction here anymore)
       // Create connection
       const newEdge: SimpleEdge = {
         id: `edge-${Date.now()}`,
@@ -764,22 +728,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
     }
     // --- NOT IN CONNECT MODE ---
     if (!this.connectMode) {
-      if (node.data?.type === 'input') {
-        const outgoingEdges = this.edges.filter(e => e.source === node.id);
-        if (outgoingEdges.length >= 1) {
-          // Only show red border, do not show snackbar
-          this.nodeErrorStates[node.id] = true;
-          this.cdr.detectChanges();
-          setTimeout(() => {
-            this.nodeErrorStates[node.id] = false;
-            this.cdr.detectChanges();
-          }, 1000);
-          // Still allow opening the node editor
-          this.selectedNode = node;
-          this.openNodeEditor(node);
-          return;
-        }
-      }
+      // REMOVE: Outgoing edge restriction for Input node
       this.selectedNode = node;
       this.openNodeEditor(node);
     }
