@@ -143,6 +143,7 @@ interface NodeData {
                   <mat-option value="set_variable">Set Variable</mat-option>
                   <mat-option value="send_email">Send Email</mat-option>
                   <mat-option value="log_event">Log Event</mat-option>
+                  <mat-option value="notify_owner">Notify Bot Owner</mat-option>
                 </mat-select>
               </mat-form-field>
 
@@ -154,6 +155,15 @@ interface NodeData {
                 <mat-form-field appearance="outline" class="full-width">
                   <mat-label>Variable Value</mat-label>
                   <input matInput formControlName="variableValue" placeholder="Enter variable value">
+                </mat-form-field>
+              </div>
+
+              <!-- Notify Owner Message Input -->
+              <div *ngIf="nodeForm.get('actionType')?.value === 'notify_owner'">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Notification Message</mat-label>
+                  <textarea matInput formControlName="notifyOwnerMessage" rows="3" placeholder="Enter the message to send to the bot owner"></textarea>
+                  <mat-hint>You can use variables like <span>{{'{{user_id}}'}}</span> in your message.</mat-hint>
                 </mat-form-field>
               </div>
             </div>
@@ -319,6 +329,7 @@ export class NodeEditorComponent implements OnInit {
       actionType: ['set_variable'],
       variableName: [''],
       variableValue: [''],
+      notifyOwnerMessage: [''], // New field
       webhookUrl: [''],
       webhookMethod: ['POST'],
       webhookHeaders: ['{}'],
@@ -348,6 +359,7 @@ export class NodeEditorComponent implements OnInit {
       actionType: data.action_type || 'set_variable',
       variableName: '', // will be set below if action_params exists
       variableValue: '', // will be set below if action_params exists
+      notifyOwnerMessage: '', // will be set below if action_params exists
       webhookUrl: data.webhook_url || '',
       webhookMethod: data.method || 'POST',
       webhookHeaders: data.headers || '{}',
@@ -364,6 +376,18 @@ export class NodeEditorComponent implements OnInit {
         this.nodeForm.patchValue({
           variableName: params.variable || '',
           variableValue: params.value || ''
+        });
+      } catch (e) {
+        // If parsing fails, leave as empty
+      }
+    }
+
+    // If this is an action node with action_params, parse and set notifyOwnerMessage
+    if (data.type === 'action' && data.action_type === 'notify_owner' && data.action_params) {
+      try {
+        const params = JSON.parse(data.action_params);
+        this.nodeForm.patchValue({
+          notifyOwnerMessage: params.message || ''
         });
       } catch (e) {
         // If parsing fails, leave as empty
@@ -403,7 +427,8 @@ export class NodeEditorComponent implements OnInit {
       this.nodeForm.patchValue({
         actionType: 'set_variable',
         variableName: '',
-        variableValue: ''
+        variableValue: '',
+        notifyOwnerMessage: '' // Reset new field
       });
     }
     
@@ -529,6 +554,12 @@ export class NodeEditorComponent implements OnInit {
             nodeData.action_params = JSON.stringify({
               variable: formValue.variableName,
               value: formValue.variableValue
+            });
+          }
+          // New: notify_owner
+          if (formValue.actionType === 'notify_owner') {
+            nodeData.action_params = JSON.stringify({
+              message: formValue.notifyOwnerMessage
             });
           }
           break;
