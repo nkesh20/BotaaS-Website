@@ -196,6 +196,14 @@ interface NodeData {
                 <textarea matInput formControlName="webhookBody" rows="4" 
                           placeholder='{"message": "{user_message}"}'></textarea>
               </mat-form-field>
+
+              <!-- New: Response Variables -->
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Response Variables (JSON Array)</mat-label>
+                <textarea matInput formControlName="webhookResponseVariables" rows="2" 
+                          placeholder='["external_id", "score"]'></textarea>
+                <mat-hint>Specify the variable names to extract from the webhook response and save to the flow context.</mat-hint>
+              </mat-form-field>
             </div>
 
             <!-- Input Node Settings -->
@@ -334,6 +342,7 @@ export class NodeEditorComponent implements OnInit {
       webhookMethod: ['POST'],
       webhookHeaders: ['{}'],
       webhookBody: ['{}'],
+      webhookResponseVariables: ['[]'], // New field
       inputType: ['text'],
       inputVariableName: [''],
       endMessage: ['']
@@ -364,6 +373,7 @@ export class NodeEditorComponent implements OnInit {
       webhookMethod: data.method || 'POST',
       webhookHeaders: data.headers || '{}',
       webhookBody: data.request_body || '{}',
+      webhookResponseVariables: JSON.stringify(data.response_variables || []), // New field
       inputType: data.input_type || 'text',
       inputVariableName: data.variable_name || '',
       endMessage: data.content || ''
@@ -437,7 +447,8 @@ export class NodeEditorComponent implements OnInit {
         webhookUrl: '',
         webhookMethod: 'POST',
         webhookHeaders: '{}',
-        webhookBody: '{}'
+        webhookBody: '{}',
+        webhookResponseVariables: '[]' // Reset new field
       });
     }
     
@@ -568,6 +579,12 @@ export class NodeEditorComponent implements OnInit {
           nodeData.method = formValue.webhookMethod;
           nodeData.headers = formValue.webhookHeaders;
           nodeData.request_body = formValue.webhookBody;
+          // New: Parse and save response_variables
+          try {
+            nodeData.response_variables = JSON.parse(formValue.webhookResponseVariables);
+          } catch {
+            nodeData.response_variables = [];
+          }
           break;
         case 'input':
           nodeData.input_type = formValue.inputType;
