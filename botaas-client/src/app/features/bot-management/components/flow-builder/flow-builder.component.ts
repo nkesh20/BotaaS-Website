@@ -844,7 +844,10 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
       });
 
       dialogRef.afterClosed().subscribe(result => {
-        if (result) {
+        if (result?.delete) {
+          this.edges = this.edges.filter(e => e.id !== edge.id);
+          this.snackBar.open('Edge deleted', 'Close', { duration: 2000 });
+        } else if (result) {
           const index = this.edges.findIndex(e => e.id === edge.id);
           if (index !== -1) {
             this.edges[index] = {

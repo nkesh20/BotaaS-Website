@@ -79,6 +79,7 @@ interface EdgeData {
       <button mat-button mat-dialog-close>Cancel</button>
       <button mat-raised-button color="primary" (click)="onSubmit()" 
               [disabled]="!edgeForm.valid">Save Edge</button>
+      <button mat-raised-button color="warn" (click)="onDelete()">Delete Edge</button>
     </mat-dialog-actions>
   `,
   styles: [`
@@ -198,5 +199,9 @@ export class EdgeEditorComponent implements OnInit {
       };
       this.dialogRef.close(result);
     }
+  }
+
+  onDelete() {
+    this.dialogRef.close({ delete: true });
   }
 } 
