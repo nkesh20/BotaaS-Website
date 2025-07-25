@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, OnDestroy, AfterViewInit, QueryList, ViewChildren } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, OnDestroy, AfterViewInit, QueryList, ViewChildren, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -67,10 +67,7 @@ const EDGE_COLORS = [
           <mat-icon>call_made</mat-icon>
           {{ connectMode ? 'Connecting...' : 'Connect Nodes' }}
         </button>
-        <button mat-button (click)="deleteSelectedNode()" [disabled]="!selectedNode">
-          <mat-icon>delete</mat-icon>
-          Delete Node
-        </button>
+        <!-- Delete Node button removed from toolbar -->
         <button mat-button (click)="showEdgeEditingHelp()" color="accent">
           <mat-icon>help</mat-icon>
           Edge Labels Help
@@ -396,7 +393,7 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
   
   connectMode = false;
   connectingFrom: SimpleNode | null = null;
-  
+
   isDragging = false;
   dragOffset = { x: 0, y: 0 };
   wasDragging = false;
@@ -412,7 +409,8 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
     public route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef // Inject ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -498,7 +496,8 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
           id: edge.id,
           source: edge.source,
           target: edge.target,
-          label: edge.label || ''
+          label: edge.label,
+          condition: edge.condition
         }));
       },
       error: (error) => {
@@ -694,23 +693,39 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
       this.wasDragging = false;
       return;
     }
-    if (this.connectMode) {
-      if (!this.connectingFrom) {
-        this.connectingFrom = node;
-      } else if (this.connectingFrom.id !== node.id) {
-        // Create connection
-        const newEdge: SimpleEdge = {
-          id: `edge-${Date.now()}`,
-          source: this.connectingFrom.id,
-          target: node.id,
-          label: 'Next'
-        };
-        this.edges = [...this.edges, newEdge];
-        this.snackBar.open(`Connected ${this.connectingFrom.label} → ${node.label}`, 'Close', { duration: 2000 });
-        this.connectingFrom = null;
-        this.connectMode = false;
-      }
-    } else {
+    // --- CONNECT MODE: Selecting source node ---
+    if (this.connectMode && !this.connectingFrom) {
+      // REMOVE: If Input node and already has outgoing edge, show error and do not enter connect mode
+      // (No restriction here anymore)
+      this.connectingFrom = node;
+      return;
+    }
+    // --- CONNECT MODE: Clicking the same node again cancels source selection but stays in connect mode ---
+    if (this.connectMode && this.connectingFrom && this.connectingFrom.id === node.id) {
+      this.connectingFrom = null;
+      // Do not set connectMode = false; stay in connect mode
+      return;
+    }
+    // --- CONNECT MODE: Selecting target node ---
+    if (this.connectMode && this.connectingFrom && this.connectingFrom.id !== node.id) {
+      // REMOVE: Restriction: Input node can have only one outgoing edge (for source)
+      // (No restriction here anymore)
+      // Create connection
+      const newEdge: SimpleEdge = {
+        id: `edge-${Date.now()}`,
+        source: this.connectingFrom.id,
+        target: node.id,
+        label: 'Next'
+      };
+      this.edges = [...this.edges, newEdge];
+      this.snackBar.open(`Connected ${this.connectingFrom.label} → ${node.label}`, 'Close', { duration: 2000 });
+      this.connectingFrom = null;
+      this.connectMode = false;
+      return;
+    }
+    // --- NOT IN CONNECT MODE ---
+    if (!this.connectMode) {
+      // REMOVE: Outgoing edge restriction for Input node
       this.selectedNode = node;
       this.openNodeEditor(node);
     }
@@ -778,14 +793,14 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
 
       console.log('Created new message node:', newNode);
       this.nodes = [...this.nodes, newNode];
-      this.openNodeEditor(newNode);
+      this.openNodeEditor(newNode, true); // Pass isNew: true
     } catch (error) {
       console.error('Error in addNode:', error);
       this.snackBar.open('Error creating node', 'Close', { duration: 3000 });
     }
   }
 
-  openNodeEditor(node: SimpleNode) {
+  openNodeEditor(node: SimpleNode, isNew: boolean = false) {
     try {
       const dialogRef = this.dialog.open(NodeEditorComponent, {
         width: '600px',
@@ -793,12 +808,20 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
           id: node.id,
           label: node.label,
           data: node.data 
-        }},
+        }, isNew },
         disableClose: false
       });
 
       dialogRef.afterClosed().subscribe(result => {
-        if (result) {
+        if (result?.delete) {
+          // Remove the node and its edges
+          this.nodes = this.nodes.filter(n => n.id !== node.id);
+          this.edges = this.edges.filter(e => e.source !== node.id && e.target !== node.id);
+          if (this.selectedNode?.id === node.id) {
+            this.selectedNode = null;
+          }
+          this.snackBar.open('Node deleted', 'Close', { duration: 2000 });
+        } else if (result) {
           const index = this.nodes.findIndex(n => n.id === node.id);
           if (index !== -1) {
             this.nodes[index] = {
@@ -816,14 +839,20 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
 
   openEdgeEditor(edge: SimpleEdge) {
     try {
+      // Find all outgoing edges from the same source node
+      const outgoingEdges = this.edges.filter(e => e.source === edge.source);
+      const outgoingEdgeCount = outgoingEdges.length;
       const dialogRef = this.dialog.open(EdgeEditorComponent, {
-        width: '500px',
-        data: { edge: edge },
+        width: '700px',
+        data: { edge: edge, outgoingEdgeCount },
         disableClose: false
       });
 
       dialogRef.afterClosed().subscribe(result => {
-        if (result) {
+        if (result?.delete) {
+          this.edges = this.edges.filter(e => e.id !== edge.id);
+          this.snackBar.open('Edge deleted', 'Close', { duration: 2000 });
+        } else if (result) {
           const index = this.edges.findIndex(e => e.id === edge.id);
           if (index !== -1) {
             this.edges[index] = {
@@ -957,7 +986,8 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
               id: edge.id,
               source: edge.source,
               target: edge.target,
-              label: edge.label
+              label: edge.label,
+              condition: edge.condition
             })),
             triggers: [],
             variables: {}
@@ -995,7 +1025,8 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
           id: edge.id,
           source: edge.source,
           target: edge.target,
-          label: edge.label
+          label: edge.label,
+          condition: edge.condition
         })),
         triggers: [],
         variables: {}

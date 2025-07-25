@@ -110,15 +110,24 @@ interface NodeData {
 
             <!-- Condition Node Settings -->
             <div *ngIf="nodeForm.get('type')?.value === 'condition'">
+              <div class="help-section">
+                <h4>Usage Note:</h4>
+                <div>
+                  Condition node outputs either <b>'true'</b> or <b>'false'</b>. To handle both outcomes, create outgoing edges with the conditions <b>'true'</b> and <b>'false'</b>.
+                </div>
+              </div>
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Condition Type</mat-label>
                 <mat-select formControlName="conditionType">
-                  <mat-option value="contains">Contains</mat-option>
                   <mat-option value="equals">Equals</mat-option>
+                  <mat-option value="contains">Contains</mat-option>
+                  <mat-option value="number">Is Number</mat-option>
+                  <mat-option value="email">Is Email</mat-option>
+                  <mat-option value="phone_number">Is Phone Number</mat-option>
+                  <mat-option value="date">Is Date</mat-option>
                   <mat-option value="regex">Regular Expression</mat-option>
                 </mat-select>
               </mat-form-field>
-
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Condition Value</mat-label>
                 <input matInput formControlName="conditionValue" 
@@ -197,11 +206,6 @@ interface NodeData {
                 <input matInput formControlName="inputVariableName" placeholder="Enter variable name to store input">
               </mat-form-field>
 
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Validation Pattern (Optional)</mat-label>
-                <input matInput formControlName="inputValidationPattern" 
-                       placeholder="Enter regex pattern for validation">
-              </mat-form-field>
             </div>
 
             <!-- End Node Settings -->
@@ -223,6 +227,7 @@ interface NodeData {
       <button mat-button mat-dialog-close>Cancel</button>
       <button mat-raised-button color="primary" (click)="onSubmit()" 
               [disabled]="!nodeForm.valid">Save Node</button>
+      <button mat-raised-button color="warn" (click)="onDelete()" [disabled]="data.isNew">Delete Node</button>
     </mat-dialog-actions>
   `,
   styles: [`
@@ -270,6 +275,29 @@ interface NodeData {
       max-height: 70vh;
       overflow-y: auto;
     }
+
+    .help-section {
+      margin-top: 16px;
+      margin-bottom: 16px;
+      padding: 12px;
+      background: #e3f2fd;
+      border-radius: 4px;
+    }
+
+    .help-section h4 {
+      margin: 0 0 8px 0;
+      color: #1976d2;
+    }
+
+    .help-section ul {
+      margin: 8px 0;
+      padding-left: 20px;
+    }
+
+    .help-section li {
+      margin: 4px 0;
+      font-size: 14px;
+    }
   `]
 })
 export class NodeEditorComponent implements OnInit {
@@ -280,7 +308,7 @@ export class NodeEditorComponent implements OnInit {
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
     public dialogRef: MatDialogRef<NodeEditorComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { node: NodeData }
+    @Inject(MAT_DIALOG_DATA) public data: { node: NodeData, isNew: boolean }
   ) {
     this.nodeForm = this.fb.group({
       label: ['', Validators.required],
@@ -297,7 +325,6 @@ export class NodeEditorComponent implements OnInit {
       webhookBody: ['{}'],
       inputType: ['text'],
       inputVariableName: [''],
-      inputValidationPattern: [''],
       endMessage: ['']
     });
 
@@ -307,30 +334,41 @@ export class NodeEditorComponent implements OnInit {
   ngOnInit() {
     this.loadNodeData();
     this.setupTypeChangeListener();
+    this.setupConditionValidators();
   }
 
   loadNodeData() {
-    const node = this.data.node;
-    const data = node.data;
-
+    const data = this.data.node?.data || {};
     this.nodeForm.patchValue({
-      label: node.label,
+      label: this.data.node?.label || '',
       type: data.type || 'message',
       content: data.content || '',
       conditionType: data.condition_type || 'contains',
       conditionValue: data.condition_value || '',
       actionType: data.action_type || 'set_variable',
-      variableName: data.variable_name || '',
-      variableValue: data.variable_value || '',
+      variableName: '', // will be set below if action_params exists
+      variableValue: '', // will be set below if action_params exists
       webhookUrl: data.webhook_url || '',
       webhookMethod: data.method || 'POST',
       webhookHeaders: data.headers || '{}',
       webhookBody: data.request_body || '{}',
       inputType: data.input_type || 'text',
       inputVariableName: data.variable_name || '',
-      inputValidationPattern: data.validation_pattern || '',
       endMessage: data.content || ''
     });
+
+    // If this is an action node with action_params, parse and set variableName/variableValue
+    if (data.type === 'action' && data.action_type === 'set_variable' && data.action_params) {
+      try {
+        const params = JSON.parse(data.action_params);
+        this.nodeForm.patchValue({
+          variableName: params.variable || '',
+          variableValue: params.value || ''
+        });
+      } catch (e) {
+        // If parsing fails, leave as empty
+      }
+    }
 
     // Load quick replies
     if (data.quick_replies && Array.isArray(data.quick_replies)) {
@@ -382,7 +420,6 @@ export class NodeEditorComponent implements OnInit {
       this.nodeForm.patchValue({
         inputType: 'text',
         inputVariableName: '',
-        inputValidationPattern: ''
       });
     }
     
@@ -391,6 +428,31 @@ export class NodeEditorComponent implements OnInit {
         endMessage: ''
       });
     }
+  }
+
+  setupConditionValidators() {
+    // Listen for type changes to apply validators dynamically
+    this.nodeForm.get('type')?.valueChanges.subscribe(type => {
+      if (type === 'condition') {
+        this.nodeForm.get('conditionType')?.setValidators([Validators.required]);
+        this.nodeForm.get('conditionValue')?.setValidators([Validators.required]);
+      } else {
+        this.nodeForm.get('conditionType')?.clearValidators();
+        this.nodeForm.get('conditionValue')?.clearValidators();
+      }
+      this.nodeForm.get('conditionType')?.updateValueAndValidity();
+      this.nodeForm.get('conditionValue')?.updateValueAndValidity();
+    });
+    // Also run once on init
+    if (this.nodeForm.get('type')?.value === 'condition') {
+      this.nodeForm.get('conditionType')?.setValidators([Validators.required]);
+      this.nodeForm.get('conditionValue')?.setValidators([Validators.required]);
+    } else {
+      this.nodeForm.get('conditionType')?.clearValidators();
+      this.nodeForm.get('conditionValue')?.clearValidators();
+    }
+    this.nodeForm.get('conditionType')?.updateValueAndValidity();
+    this.nodeForm.get('conditionValue')?.updateValueAndValidity();
   }
 
   addQuickReply() {
@@ -457,6 +519,7 @@ export class NodeEditorComponent implements OnInit {
           }
           break;
         case 'condition':
+          // Always include both fields, even if empty (should be validated)
           nodeData.condition_type = formValue.conditionType;
           nodeData.condition_value = formValue.conditionValue;
           break;
@@ -478,7 +541,6 @@ export class NodeEditorComponent implements OnInit {
         case 'input':
           nodeData.input_type = formValue.inputType;
           nodeData.variable_name = formValue.inputVariableName;
-          nodeData.validation_pattern = formValue.inputValidationPattern;
           break;
         case 'end':
           nodeData.content = formValue.endMessage;
@@ -492,5 +554,14 @@ export class NodeEditorComponent implements OnInit {
 
       this.dialogRef.close(result);
     }
+  }
+
+  onDelete() {
+    this.dialogRef.close({ delete: true });
+  }
+
+  isCreateMode(): boolean {
+    // Disable delete if this is a new node (not yet persisted)
+    return !!this.data.isNew;
   }
 } 

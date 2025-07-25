@@ -52,7 +52,7 @@ interface EdgeData {
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Edge Label</mat-label>
               <input matInput formControlName="label" placeholder="Enter edge label (e.g., 'Services', 'Support')">
-              <mat-hint>This label must EXACTLY match the quick reply button text or user input for proper routing</mat-hint>
+              <mat-hint>Label for this edge (e.g., button text or route name)</mat-hint>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="full-width">
@@ -62,13 +62,12 @@ interface EdgeData {
             </mat-form-field>
 
             <div class="help-section">
-              <h4>Edge Label Usage:</h4>
+              <h4>Edge Condition Usage Note:</h4>
               <ul>
-                <li><strong>Quick Reply Buttons:</strong> Set label to EXACTLY match button text (e.g., "Services" for a "Services" button)</li>
-                <li><strong>Text Matching:</strong> Set label to match user input (e.g., "help" to match when user types "help")</li>
-                <li><strong>Default Route:</strong> Use "Next", "Continue", or "Default" for automatic progression</li>
-                <li><strong>Conditional:</strong> Use "true"/"false" for condition-based routing</li>
-                <li><strong>Important:</strong> Edge labels are case-sensitive and must match exactly for proper routing!</li>
+                <li>Leave the condition blank to match <strong>any input</strong>.</li>
+                <li>To match a quick reply button, enter the button’s text as the condition.</li>
+                <li>Use specific words or values (like <code>"true"</code> or <code>"false"</code>) for custom routing.</li>
+                <li>If there are multiple edges with conditions, the first matching condition will be used.</li>
               </ul>
             </div>
           </mat-card-content>
@@ -80,6 +79,7 @@ interface EdgeData {
       <button mat-button mat-dialog-close>Cancel</button>
       <button mat-raised-button color="primary" (click)="onSubmit()" 
               [disabled]="!edgeForm.valid">Save Edge</button>
+      <button mat-raised-button color="warn" (click)="onDelete()">Delete Edge</button>
     </mat-dialog-actions>
   `,
   styles: [`
@@ -135,15 +135,38 @@ interface EdgeData {
       max-height: 70vh;
       overflow-y: auto;
     }
+    .auto-routing-info {
+      display: flex;
+      align-items: flex-start;
+      background: #e3f2fd;
+      color: #1976d2;
+      border-radius: 4px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      font-size: 15px;
+      gap: 12px;
+      min-width: 0;
+      box-sizing: border-box;
+      word-break: break-word;
+    }
+    .auto-routing-info mat-icon {
+      flex-shrink: 0;
+      min-width: 24px;
+      min-height: 24px;
+      font-size: 24px;
+      margin-right: 4px;
+      margin-top: 2px;
+    }
   `]
 })
 export class EdgeEditorComponent implements OnInit {
   edgeForm: FormGroup;
+  // REMOVED: isSingleOutgoingEdge: boolean = false;
 
   constructor(
     private fb: FormBuilder,
     public dialogRef: MatDialogRef<EdgeEditorComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { edge: EdgeData }
+    @Inject(MAT_DIALOG_DATA) public data: { edge: EdgeData, outgoingEdgeCount?: number }
   ) {
     this.edgeForm = this.fb.group({
       label: ['', Validators.required],
@@ -152,6 +175,7 @@ export class EdgeEditorComponent implements OnInit {
   }
 
   ngOnInit() {
+    // REMOVED: this.isSingleOutgoingEdge = this.data.outgoingEdgeCount === 1;
     this.loadEdgeData();
   }
 
@@ -161,18 +185,23 @@ export class EdgeEditorComponent implements OnInit {
       label: edge.label || '',
       condition: edge.condition || ''
     });
+    this.edgeForm.get('label')?.enable();
+    this.edgeForm.get('condition')?.enable();
   }
 
   onSubmit() {
     if (this.edgeForm.valid) {
-      const formValue = this.edgeForm.value;
+      const formValue = this.edgeForm.getRawValue();
       const result = {
         ...this.data.edge,
         label: formValue.label,
         condition: formValue.condition || undefined
       };
-
       this.dialogRef.close(result);
     }
+  }
+
+  onDelete() {
+    this.dialogRef.close({ delete: true });
   }
 } 
