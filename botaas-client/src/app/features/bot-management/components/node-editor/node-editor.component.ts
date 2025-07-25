@@ -110,6 +110,12 @@ interface NodeData {
 
             <!-- Condition Node Settings -->
             <div *ngIf="nodeForm.get('type')?.value === 'condition'">
+              <div class="help-section">
+                <h4>Usage Note:</h4>
+                <div>
+                  Condition node outputs either <b>'true'</b> or <b>'false'</b>. To handle both outcomes, create outgoing edges with the conditions <b>'true'</b> and <b>'false'</b>.
+                </div>
+              </div>
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Condition Type</mat-label>
                 <mat-select formControlName="conditionType">
@@ -122,7 +128,6 @@ interface NodeData {
                   <mat-option value="regex">Regular Expression</mat-option>
                 </mat-select>
               </mat-form-field>
-
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Condition Value</mat-label>
                 <input matInput formControlName="conditionValue" 
@@ -269,6 +274,29 @@ interface NodeData {
     mat-dialog-content {
       max-height: 70vh;
       overflow-y: auto;
+    }
+
+    .help-section {
+      margin-top: 16px;
+      margin-bottom: 16px;
+      padding: 12px;
+      background: #e3f2fd;
+      border-radius: 4px;
+    }
+
+    .help-section h4 {
+      margin: 0 0 8px 0;
+      color: #1976d2;
+    }
+
+    .help-section ul {
+      margin: 8px 0;
+      padding-left: 20px;
+    }
+
+    .help-section li {
+      margin: 4px 0;
+      font-size: 14px;
     }
   `]
 })
