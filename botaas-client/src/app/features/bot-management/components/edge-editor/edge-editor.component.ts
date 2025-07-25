@@ -44,10 +44,6 @@ interface EdgeData {
             <mat-card-title>Edge Properties</mat-card-title>
           </mat-card-header>
           <mat-card-content>
-            <div *ngIf="isSingleOutgoingEdge" class="auto-routing-info">
-              <mat-icon color="primary" style="vertical-align: middle;">info</mat-icon>
-              <span><strong>Automatic Routing:</strong> This node has only one outgoing edge. It will be used automatically, so the label is set to "Next" and no condition is required.</span>
-            </div>
             <div class="edge-info">
               <p><strong>From:</strong> {{ data.edge.source }}</p>
               <p><strong>To:</strong> {{ data.edge.target }}</p>
@@ -56,7 +52,7 @@ interface EdgeData {
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Edge Label</mat-label>
               <input matInput formControlName="label" placeholder="Enter edge label (e.g., 'Services', 'Support')" [disabled]="isSingleOutgoingEdge">
-              <mat-hint>This label must EXACTLY match the quick reply button text or user input for proper routing</mat-hint>
+              <mat-hint>Label for this edge (e.g., button text or route name)</mat-hint>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="full-width">
@@ -66,13 +62,12 @@ interface EdgeData {
             </mat-form-field>
 
             <div class="help-section">
-              <h4>Edge Label Usage:</h4>
+              <h4>Edge Condition Usage Note:</h4>
               <ul>
-                <li><strong>Quick Reply Buttons:</strong> Set label to EXACTLY match button text (e.g., "Services" for a "Services" button)</li>
-                <li><strong>Text Matching:</strong> Set label to match user input (e.g., "help" to match when user types "help")</li>
-                <li><strong>Default Route:</strong> Use "Next", "Continue", or "Default" for automatic progression</li>
-                <li><strong>Conditional:</strong> Use "true"/"false" for condition-based routing</li>
-                <li><strong>Important:</strong> Edge labels are case-sensitive and must match exactly for proper routing!</li>
+                <li>Leave the condition blank to match <strong>any input</strong>.</li>
+                <li>To match a quick reply button, enter the button’s text as the condition.</li>
+                <li>Use specific words or values (like <code>"true"</code> or <code>"false"</code>) for custom routing.</li>
+                <li>If there are multiple edges with conditions, the first matching condition will be used.</li>
               </ul>
             </div>
           </mat-card-content>
@@ -185,30 +180,21 @@ export class EdgeEditorComponent implements OnInit {
 
   loadEdgeData() {
     const edge = this.data.edge;
-    if (this.isSingleOutgoingEdge) {
-      this.edgeForm.patchValue({
-        label: 'Next',
-        condition: ''
-      });
-      this.edgeForm.get('label')?.disable();
-      this.edgeForm.get('condition')?.disable();
-    } else {
-      this.edgeForm.patchValue({
-        label: edge.label || '',
-        condition: edge.condition || ''
-      });
-      this.edgeForm.get('label')?.enable();
-      this.edgeForm.get('condition')?.enable();
-    }
+    this.edgeForm.patchValue({
+      label: edge.label || '',
+      condition: edge.condition || ''
+    });
+    this.edgeForm.get('label')?.enable();
+    this.edgeForm.get('condition')?.enable();
   }
 
   onSubmit() {
-    if (this.edgeForm.valid || this.isSingleOutgoingEdge) {
+    if (this.edgeForm.valid) {
       const formValue = this.edgeForm.getRawValue();
       const result = {
         ...this.data.edge,
-        label: this.isSingleOutgoingEdge ? 'Next' : formValue.label,
-        condition: this.isSingleOutgoingEdge ? '' : (formValue.condition || undefined)
+        label: formValue.label,
+        condition: formValue.condition || undefined
       };
       this.dialogRef.close(result);
     }
