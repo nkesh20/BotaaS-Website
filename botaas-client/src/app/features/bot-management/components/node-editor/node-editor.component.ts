@@ -338,18 +338,16 @@ export class NodeEditorComponent implements OnInit {
   }
 
   loadNodeData() {
-    const node = this.data.node;
-    const data = node.data;
-
+    const data = this.data.node?.data || {};
     this.nodeForm.patchValue({
-      label: node.label,
+      label: this.data.node?.label || '',
       type: data.type || 'message',
       content: data.content || '',
       conditionType: data.condition_type || 'contains',
       conditionValue: data.condition_value || '',
       actionType: data.action_type || 'set_variable',
-      variableName: data.variable_name || '',
-      variableValue: data.variable_value || '',
+      variableName: '', // will be set below if action_params exists
+      variableValue: '', // will be set below if action_params exists
       webhookUrl: data.webhook_url || '',
       webhookMethod: data.method || 'POST',
       webhookHeaders: data.headers || '{}',
@@ -358,6 +356,19 @@ export class NodeEditorComponent implements OnInit {
       inputVariableName: data.variable_name || '',
       endMessage: data.content || ''
     });
+
+    // If this is an action node with action_params, parse and set variableName/variableValue
+    if (data.type === 'action' && data.action_type === 'set_variable' && data.action_params) {
+      try {
+        const params = JSON.parse(data.action_params);
+        this.nodeForm.patchValue({
+          variableName: params.variable || '',
+          variableValue: params.value || ''
+        });
+      } catch (e) {
+        // If parsing fails, leave as empty
+      }
+    }
 
     // Load quick replies
     if (data.quick_replies && Array.isArray(data.quick_replies)) {
