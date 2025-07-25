@@ -222,6 +222,7 @@ interface NodeData {
       <button mat-button mat-dialog-close>Cancel</button>
       <button mat-raised-button color="primary" (click)="onSubmit()" 
               [disabled]="!nodeForm.valid">Save Node</button>
+      <button mat-raised-button color="warn" (click)="onDelete()" [disabled]="data.isNew">Delete Node</button>
     </mat-dialog-actions>
   `,
   styles: [`
@@ -279,7 +280,7 @@ export class NodeEditorComponent implements OnInit {
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
     public dialogRef: MatDialogRef<NodeEditorComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { node: NodeData }
+    @Inject(MAT_DIALOG_DATA) public data: { node: NodeData, isNew: boolean }
   ) {
     this.nodeForm = this.fb.group({
       label: ['', Validators.required],
@@ -514,5 +515,14 @@ export class NodeEditorComponent implements OnInit {
 
       this.dialogRef.close(result);
     }
+  }
+
+  onDelete() {
+    this.dialogRef.close({ delete: true });
+  }
+
+  isCreateMode(): boolean {
+    // Disable delete if this is a new node (not yet persisted)
+    return !!this.data.isNew;
   }
 } 

@@ -67,10 +67,7 @@ const EDGE_COLORS = [
           <mat-icon>call_made</mat-icon>
           {{ connectMode ? 'Connecting...' : 'Connect Nodes' }}
         </button>
-        <button mat-button (click)="deleteSelectedNode()" [disabled]="!selectedNode">
-          <mat-icon>delete</mat-icon>
-          Delete Node
-        </button>
+        <!-- Delete Node button removed from toolbar -->
         <button mat-button (click)="showEdgeEditingHelp()" color="accent">
           <mat-icon>help</mat-icon>
           Edge Labels Help
@@ -796,14 +793,14 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
 
       console.log('Created new message node:', newNode);
       this.nodes = [...this.nodes, newNode];
-      this.openNodeEditor(newNode);
+      this.openNodeEditor(newNode, true); // Pass isNew: true
     } catch (error) {
       console.error('Error in addNode:', error);
       this.snackBar.open('Error creating node', 'Close', { duration: 3000 });
     }
   }
 
-  openNodeEditor(node: SimpleNode) {
+  openNodeEditor(node: SimpleNode, isNew: boolean = false) {
     try {
       const dialogRef = this.dialog.open(NodeEditorComponent, {
         width: '600px',
@@ -811,12 +808,20 @@ export class FlowBuilderComponent implements OnInit, OnDestroy, AfterViewInit {
           id: node.id,
           label: node.label,
           data: node.data 
-        }},
+        }, isNew },
         disableClose: false
       });
 
       dialogRef.afterClosed().subscribe(result => {
-        if (result) {
+        if (result?.delete) {
+          // Remove the node and its edges
+          this.nodes = this.nodes.filter(n => n.id !== node.id);
+          this.edges = this.edges.filter(e => e.source !== node.id && e.target !== node.id);
+          if (this.selectedNode?.id === node.id) {
+            this.selectedNode = null;
+          }
+          this.snackBar.open('Node deleted', 'Close', { duration: 2000 });
+        } else if (result) {
           const index = this.nodes.findIndex(n => n.id === node.id);
           if (index !== -1) {
             this.nodes[index] = {
