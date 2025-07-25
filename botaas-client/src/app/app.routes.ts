@@ -44,6 +44,10 @@ export const routes: Routes = [
                 loadComponent: () => import('./features/bot-management/components/bot-analytics/bot-analytics.component').then(m => m.BotAnalyticsComponent)
             },
             {
+                path: 'broadcast',
+                loadComponent: () => import('./features/bot-management/components/broadcast.component').then(m => m.BroadcastComponent)
+            },
+            {
                 path: 'profile',
                 loadComponent: () => import('./components/dashboard/dashboard.component').then(m => m.DashboardComponent)
             },

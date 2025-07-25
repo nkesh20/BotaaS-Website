@@ -1,0 +1,50 @@
+<form [formGroup]="broadcastForm" (ngSubmit)="submit()" class="broadcast-form mat-elevation-z2">
+  <mat-card>
+    <mat-card-title>Broadcast Message</mat-card-title>
+    <mat-card-content>
+      <div class="form-group">
+        <mat-form-field appearance="fill" class="full-width">
+          <mat-label>Bot</mat-label>
+          <mat-select formControlName="bot_id" required>
+            <mat-option *ngFor="let bot of bots" [value]="bot.id">{{ bot.first_name }} ({{ bot.username }})</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="variables-info">
+        <span>Available variables:</span>
+        <button mat-stroked-button type="button" (click)="insertVariable('first_name')">{{'{{first_name}}'}}</button>
+        <button mat-stroked-button type="button" (click)="insertVariable('last_name')">{{'{{last_name}}'}}</button>
+        <button mat-stroked-button type="button" (click)="insertVariable('telegram_username')">{{'{{telegram_username}}'}}</button>
+      </div>
+      <div class="form-group">
+        <mat-form-field appearance="fill" class="full-width">
+          <mat-label>Message</mat-label>
+          <textarea matInput formControlName="text" rows="5" required maxlength="4096" placeholder="Enter your broadcast message..."></textarea>
+          <mat-hint align="end">{{ broadcastForm.get('text')?.value?.length || 0 }}/4096</mat-hint>
+        </mat-form-field>
+      </div>
+      <div class="form-row">
+        <mat-form-field appearance="fill">
+          <mat-label>Schedule (optional)</mat-label>
+          <input matInput [matDatepicker]="picker" formControlName="scheduled_time" placeholder="Pick a date and time">
+          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-label>Parse Mode</mat-label>
+          <mat-select formControlName="parse_mode">
+            <mat-option value="Markdown">Markdown</mat-option>
+            <mat-option value="HTML">HTML</mat-option>
+            <mat-option value="Plain">Plain</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </mat-card-content>
+    <mat-card-actions align="end">
+      <button mat-raised-button color="primary" type="submit" [disabled]="broadcastForm.invalid || loading">
+        <mat-progress-spinner *ngIf="loading" diameter="20" mode="indeterminate"></mat-progress-spinner>
+        <span *ngIf="!loading">Send Broadcast</span>
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</form> 
