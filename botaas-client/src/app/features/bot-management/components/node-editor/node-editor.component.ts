@@ -11,6 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 interface NodeData {
   id: string;
@@ -34,7 +35,8 @@ interface NodeData {
     MatIconModule,
     MatTabsModule,
     MatCardModule,
-    MatDividerModule
+    MatDividerModule,
+    MatCheckboxModule
   ],
   template: `
     <h2 mat-dialog-title>
@@ -144,6 +146,7 @@ interface NodeData {
                   <mat-option value="send_email">Send Email</mat-option>
                   <mat-option value="log_event">Log Event</mat-option>
                   <mat-option value="notify_owner">Notify Bot Owner</mat-option>
+                  <mat-option value="ban_chat_member">Ban Chat Member</mat-option>
                 </mat-select>
               </mat-form-field>
 
@@ -165,6 +168,22 @@ interface NodeData {
                   <textarea matInput formControlName="notifyOwnerMessage" rows="3" placeholder="Enter the message to send to the bot owner"></textarea>
                   <mat-hint>You can use variables like <span>{{'{{user_id}}'}}</span> in your message.</mat-hint>
                 </mat-form-field>
+              </div>
+
+              <!-- Ban Chat Member Settings -->
+              <div *ngIf="nodeForm.get('actionType')?.value === 'ban_chat_member'">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Ban Until Date (Optional)</mat-label>
+                  <input matInput type="datetime-local" formControlName="banUntilDate">
+                  <mat-hint>Leave empty for permanent ban</mat-hint>
+                </mat-form-field>
+                
+                <div class="checkbox-section">
+                  <mat-checkbox formControlName="revokeMessages" color="primary">
+                    Revoke Messages
+                  </mat-checkbox>
+                  <div class="help-text">Delete all messages from the user in the chat</div>
+                </div>
               </div>
             </div>
 
@@ -308,6 +327,18 @@ interface NodeData {
       margin: 4px 0;
       font-size: 14px;
     }
+
+    .checkbox-section {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .checkbox-section .help-text {
+      margin-top: 0;
+      margin-bottom: 0;
+    }
   `]
 })
 export class NodeEditorComponent implements OnInit {
@@ -336,7 +367,9 @@ export class NodeEditorComponent implements OnInit {
       webhookBody: ['{}'],
       inputType: ['text'],
       inputVariableName: [''],
-      endMessage: ['']
+      endMessage: [''],
+      banUntilDate: [''], // New field
+      revokeMessages: [false] // New field
     });
 
     this.quickReplies = this.fb.array([]);
@@ -366,7 +399,9 @@ export class NodeEditorComponent implements OnInit {
       webhookBody: data.request_body || '{}',
       inputType: data.input_type || 'text',
       inputVariableName: data.variable_name || '',
-      endMessage: data.content || ''
+      endMessage: data.content || '',
+      banUntilDate: data.ban_until_date || '', // Load banUntilDate
+      revokeMessages: data.revoke_messages || false // Load revokeMessages
     });
 
     // If this is an action node with action_params, parse and set variableName/variableValue
@@ -388,6 +423,19 @@ export class NodeEditorComponent implements OnInit {
         const params = JSON.parse(data.action_params);
         this.nodeForm.patchValue({
           notifyOwnerMessage: params.message || ''
+        });
+      } catch (e) {
+        // If parsing fails, leave as empty
+      }
+    }
+
+    // If this is an action node with action_params, parse and set banUntilDate and revokeMessages
+    if (data.type === 'action' && data.action_type === 'ban_chat_member' && data.action_params) {
+      try {
+        const params = JSON.parse(data.action_params);
+        this.nodeForm.patchValue({
+          banUntilDate: params.ban_until_date || '',
+          revokeMessages: params.revoke_messages || false
         });
       } catch (e) {
         // If parsing fails, leave as empty
@@ -428,7 +476,9 @@ export class NodeEditorComponent implements OnInit {
         actionType: 'set_variable',
         variableName: '',
         variableValue: '',
-        notifyOwnerMessage: '' // Reset new field
+        notifyOwnerMessage: '', // Reset new field
+        banUntilDate: '', // Reset new field
+        revokeMessages: false // Reset new field
       });
     }
     
@@ -560,6 +610,13 @@ export class NodeEditorComponent implements OnInit {
           if (formValue.actionType === 'notify_owner') {
             nodeData.action_params = JSON.stringify({
               message: formValue.notifyOwnerMessage
+            });
+          }
+          // New: ban_chat_member
+          if (formValue.actionType === 'ban_chat_member') {
+            nodeData.action_params = JSON.stringify({
+              ban_until_date: formValue.banUntilDate,
+              revoke_messages: formValue.revokeMessages
             });
           }
           break;
