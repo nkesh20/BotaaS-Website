@@ -8,6 +8,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { DatePipe, NgFor, NgIf } from '@angular/common';
+import { TranslatePipe } from '../../core/pipes/translate.pipe';
 
 @Component({
   selector: 'app-dashboard',
@@ -21,7 +22,8 @@ import { DatePipe, NgFor, NgIf } from '@angular/common';
     MatProgressSpinnerModule,
     MatIconModule,
     DatePipe,
-    NgIf
+    NgIf,
+    TranslatePipe
   ]
 })
 export class DashboardComponent implements OnInit {
