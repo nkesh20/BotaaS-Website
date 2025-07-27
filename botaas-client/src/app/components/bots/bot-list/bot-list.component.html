@@ -1,34 +1,34 @@
 <div class="bot-list-container">
     <!-- Header -->
     <div class="header">
-        <h1>My Telegram Bots</h1>
+        <h1>{{ 'bots.myBots' | translate }}</h1>
         <button mat-raised-button color="primary" (click)="addNewBot()">
             <mat-icon>add</mat-icon>
-            Add New Bot
+            {{ 'bots.addBot' | translate }}
         </button>
     </div>
 
     <!-- Loading State -->
     <div *ngIf="loading" class="loading-container">
         <mat-spinner></mat-spinner>
-        <p>Loading your bots...</p>
+        <p>{{ 'common.loading' | translate }}</p>
     </div>
 
     <!-- Error State -->
     <div *ngIf="error && !loading" class="error-container">
         <mat-icon color="warn">error</mat-icon>
         <p>{{ error }}</p>
-        <button mat-button color="primary" (click)="loadBots()">Try Again</button>
+        <button mat-button color="primary" (click)="loadBots()">{{ 'common.tryAgain' | translate }}</button>
     </div>
 
     <!-- Empty State -->
     <div *ngIf="!loading && !error && bots.length === 0" class="empty-state">
         <mat-icon>smart_toy</mat-icon>
-        <h2>No bots yet</h2>
-        <p>Get started by adding your first Telegram bot</p>
+        <h2>{{ 'bots.noBots' | translate }}</h2>
+        <p>{{ 'bots.createFirstBot' | translate }}</p>
         <button mat-raised-button color="primary" (click)="addNewBot()">
             <mat-icon>add</mat-icon>
-            Add Your First Bot
+            {{ 'bots.addBot' | translate }}
         </button>
     </div>
 
@@ -56,19 +56,19 @@
                         <mat-menu #botMenu="matMenu">
                             <button mat-menu-item (click)="editBot(bot)">
                                 <mat-icon>edit</mat-icon>
-                                <span>Edit Bot</span>
+                                <span>{{ 'bots.editBot' | translate }}</span>
                             </button>
                             <button mat-menu-item (click)="manageFlows(bot)">
                                 <mat-icon>account_tree</mat-icon>
-                                <span>Manage Flows</span>
+                                <span>{{ 'bots.botFlows' | translate }}</span>
                             </button>
                             <button mat-menu-item (click)="toggleBotStatus(bot)">
                                 <mat-icon>{{ bot.is_active ? 'pause' : 'play_arrow' }}</mat-icon>
-                                <span>{{ bot.is_active ? 'Deactivate' : 'Activate' }}</span>
+                                <span>{{ bot.is_active ? ('common.deactivate' | translate) : ('common.activate' | translate) }}</span>
                             </button>
                             <button mat-menu-item (click)="deleteBot(bot)" class="delete-item">
                                 <mat-icon>delete</mat-icon>
-                                <span>Delete</span>
+                                <span>{{ 'bots.deleteBot' | translate }}</span>
                             </button>
                         </mat-menu>
                     </mat-card-header>
@@ -83,13 +83,13 @@
                         <div class="status-chips">
                             <mat-chip-listbox>
                                 <mat-chip [color]="bot.is_active ? 'primary' : 'warn'" selected>
-                                    {{ bot.is_active ? 'Active' : 'Inactive' }}
+                                    {{ bot.is_active ? ('common.active' | translate) : ('common.inactive' | translate) }}
                                 </mat-chip>
                                 <mat-chip *ngIf="bot.can_join_groups" color="accent" selected>
-                                    Groups
+                                    {{ 'bots.groups' | translate }}
                                 </mat-chip>
                                 <mat-chip *ngIf="bot.supports_inline_queries" color="accent" selected>
-                                    Inline
+                                    {{ 'bots.inline' | translate }}
                                 </mat-chip>
                             </mat-chip-listbox>
                         </div>
@@ -98,19 +98,19 @@
                     <mat-card-actions>
                         <button mat-button (click)="manageFlows(bot)" color="primary">
                             <mat-icon>account_tree</mat-icon>
-                            Flows
+                            {{ 'bots.botFlows' | translate }}
                         </button>
                         <button mat-button (click)="toggleBotStatus(bot)" [color]="bot.is_active ? 'warn' : 'primary'">
                             <mat-icon>{{ bot.is_active ? 'pause' : 'play_arrow' }}</mat-icon>
-                            {{ bot.is_active ? 'Deactivate' : 'Activate' }}
+                            {{ bot.is_active ? ('common.deactivate' | translate) : ('common.activate' | translate) }}
                         </button>
                         <button mat-button (click)="onAnalytics(bot)">
                             <mat-icon>insights</mat-icon>
-                            Analytics
+                            {{ 'bots.botAnalytics' | translate }}
                         </button>
                         <button mat-button (click)="editBot(bot)">
                             <mat-icon>settings</mat-icon>
-                            Settings
+                            {{ 'bots.botSettings' | translate }}
                         </button>
                     </mat-card-actions>
                 </mat-card>

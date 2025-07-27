@@ -1,17 +1,18 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { BotService, Flow } from '../../services/bot.service';
 import { MatDividerModule } from '@angular/material/divider';
+import { Router, ActivatedRoute } from '@angular/router';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { BotService, Flow } from '../../services/bot.service';
+import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 
 @Component({
   selector: 'app-flow-list',
@@ -26,43 +27,44 @@ import { MatDividerModule } from '@angular/material/divider';
     MatDialogModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
-    MatDividerModule
+    MatDividerModule,
+    TranslatePipe
   ],
   template: `
     <div class="flow-list-container">
       <!-- Header -->
       <div class="header">
         <div class="header-content">
-          <h2>Conversation Flows</h2>
-          <p>Manage your bot's conversation flows and set the default flow</p>
+          <h2>{{ 'flows.conversationFlows' | translate }}</h2>
+          <p>{{ 'flows.manageFlowsDescription' | translate }}</p>
         </div>
         <button mat-raised-button color="primary" (click)="createNewFlow()">
           <mat-icon>add</mat-icon>
-          Create New Flow
+          {{ 'flows.createNewFlow' | translate }}
         </button>
       </div>
 
       <!-- Loading State -->
       <div *ngIf="isLoading" class="loading-container">
         <mat-spinner diameter="40"></mat-spinner>
-        <p>Loading flows...</p>
+        <p>{{ 'flows.loadingFlows' | translate }}</p>
       </div>
 
       <!-- Error State -->
       <div *ngIf="error && !isLoading" class="error-container">
         <mat-icon color="warn">error</mat-icon>
         <p>{{ error }}</p>
-        <button mat-button color="primary" (click)="loadFlows()">Try Again</button>
+        <button mat-button color="primary" (click)="loadFlows()">{{ 'common.tryAgain' | translate }}</button>
       </div>
 
       <!-- Empty State -->
       <div *ngIf="!isLoading && !error && flows.length === 0" class="empty-state">
         <mat-icon>account_tree</mat-icon>
-        <h3>No flows yet</h3>
-        <p>Create your first conversation flow to get started</p>
+        <h3>{{ 'flows.noFlowsYet' | translate }}</h3>
+        <p>{{ 'flows.createFirstFlowDescription' | translate }}</p>
         <button mat-raised-button color="primary" (click)="createNewFlow()">
           <mat-icon>add</mat-icon>
-          Create Your First Flow
+          {{ 'flows.createFirstFlow' | translate }}
         </button>
       </div>
 
@@ -76,7 +78,7 @@ import { MatDividerModule } from '@angular/material/divider';
               </div>
               <mat-card-title>{{ flow.name }}</mat-card-title>
               <mat-card-subtitle>
-                {{ flow.description || 'No description' }}
+                {{ flow.description || ('common.noDescription' | translate) }}
               </mat-card-subtitle>
 
               <!-- Menu Button -->
@@ -88,24 +90,24 @@ import { MatDividerModule } from '@angular/material/divider';
               <mat-menu #flowMenu="matMenu">
                 <button mat-menu-item (click)="editFlow(flow)">
                   <mat-icon>edit</mat-icon>
-                  <span>Edit Flow</span>
+                  <span>{{ 'flows.editFlow' | translate }}</span>
                 </button>
                 <button mat-menu-item (click)="duplicateFlow(flow)">
                   <mat-icon>content_copy</mat-icon>
-                  <span>Duplicate</span>
+                  <span>{{ 'flows.duplicate' | translate }}</span>
                 </button>
                 <button mat-menu-item (click)="toggleFlowActive(flow)">
                   <mat-icon>{{ flow.is_active ? 'pause' : 'play_arrow' }}</mat-icon>
-                  <span>{{ flow.is_active ? 'Deactivate' : 'Activate' }}</span>
+                  <span>{{ flow.is_active ? ('common.deactivate' | translate) : ('common.activate' | translate) }}</span>
                 </button>
                 <button mat-menu-item (click)="setAsDefault(flow)" *ngIf="!flow.is_default">
                   <mat-icon>star</mat-icon>
-                  <span>Set as Default</span>
+                  <span>{{ 'flows.setAsDefault' | translate }}</span>
                 </button>
                 <mat-divider></mat-divider>
                 <button mat-menu-item (click)="deleteFlow(flow)" class="delete-option">
                   <mat-icon>delete</mat-icon>
-                  <span>Delete</span>
+                  <span>{{ 'flows.deleteFlow' | translate }}</span>
                 </button>
               </mat-menu>
             </mat-card-header>
@@ -116,11 +118,11 @@ import { MatDividerModule } from '@angular/material/divider';
                 <mat-chip-set>
                   <mat-chip [class]="flow.is_active ? 'status-active' : 'status-inactive'">
                     <mat-icon matChipAvatar>{{ flow.is_active ? 'radio_button_checked' : 'radio_button_unchecked' }}</mat-icon>
-                    {{ flow.is_active ? 'Active' : 'Inactive' }}
+                    {{ flow.is_active ? ('common.active' | translate) : ('common.inactive' | translate) }}
                   </mat-chip>
                   <mat-chip *ngIf="flow.is_default" class="status-default">
                     <mat-icon matChipAvatar>star</mat-icon>
-                    Default
+                    {{ 'flows.default' | translate }}
                   </mat-chip>
                 </mat-chip-set>
               </div>
@@ -128,29 +130,29 @@ import { MatDividerModule } from '@angular/material/divider';
               <!-- Flow Stats -->
               <div class="flow-stats">
                 <div class="stat">
-                  <span class="stat-label">Nodes:</span>
+                  <span class="stat-label">{{ 'flows.nodes' | translate }}:</span>
                   <span class="stat-value">{{ (flow.nodes || []).length }}</span>
                 </div>
                 <div class="stat">
-                  <span class="stat-label">Connections:</span>
+                  <span class="stat-label">{{ 'flows.connections' | translate }}:</span>
                   <span class="stat-value">{{ (flow.edges || []).length }}</span>
                 </div>
                 <div class="stat">
-                  <span class="stat-label">Created:</span>
+                  <span class="stat-label">{{ 'common.created' | translate }}:</span>
                   <span class="stat-value">{{ formatDate(flow.created_at) }}</span>
                 </div>
               </div>
 
               <!-- Flow Preview -->
               <div class="flow-preview" *ngIf="(flow.nodes || []).length > 0">
-                <h4>Flow Preview</h4>
+                <h4>{{ 'flows.flowPreview' | translate }}</h4>
                 <div class="preview-nodes">
                   <div *ngFor="let node of (flow.nodes || []).slice(0, 3)" class="preview-node">
                     <mat-icon>{{ getNodeIcon(node) }}</mat-icon>
-                    <span>{{ node.label || 'Unnamed Node' }}</span>
+                    <span>{{ node.label || ('flows.unnamedNode' | translate) }}</span>
                   </div>
                   <div *ngIf="(flow.nodes || []).length > 3" class="preview-more">
-                    +{{ (flow.nodes || []).length - 3 }} more
+                    +{{ (flow.nodes || []).length - 3 }} {{ 'common.more' | translate }}
                   </div>
                 </div>
               </div>
@@ -159,19 +161,19 @@ import { MatDividerModule } from '@angular/material/divider';
             <mat-card-actions>
               <button mat-button (click)="editFlow(flow)" color="primary">
                 <mat-icon>edit</mat-icon>
-                Edit
+                {{ 'flows.edit' | translate }}
               </button>
               <button mat-button (click)="toggleFlowActive(flow)" [color]="flow.is_active ? 'warn' : 'primary'">
                 <mat-icon>{{ flow.is_active ? 'pause' : 'play_arrow' }}</mat-icon>
-                {{ flow.is_active ? 'Deactivate' : 'Activate' }}
+                {{ flow.is_active ? ('common.deactivate' | translate) : ('common.activate' | translate) }}
               </button>
               <button mat-button (click)="setAsDefault(flow)" *ngIf="!flow.is_default" color="accent">
                 <mat-icon>star</mat-icon>
-                Set Default
+                {{ 'flows.setDefault' | translate }}
               </button>
               <button mat-button (click)="testFlow(flow)" [disabled]="!flow.is_active">
                 <mat-icon>play_arrow</mat-icon>
-                Test
+                {{ 'flows.test' | translate }}
               </button>
             </mat-card-actions>
           </mat-card>
@@ -184,12 +186,11 @@ import { MatDividerModule } from '@angular/material/divider';
           <mat-card-header>
             <mat-card-title>
               <mat-icon color="primary">star</mat-icon>
-              Default Flow
+              {{ 'flows.defaultFlow' | translate }}
             </mat-card-title>
           </mat-card-header>
           <mat-card-content>
-            <p><strong>{{ defaultFlow.name }}</strong> is currently set as the default flow. 
-            This flow will be triggered when users start a conversation with your bot.</p>
+            <p><strong>{{ defaultFlow.name }}</strong> {{ 'flows.defaultFlowDescription' | translate }}</p>
           </mat-card-content>
         </mat-card>
       </div>
@@ -390,10 +391,29 @@ import { MatDividerModule } from '@angular/material/divider';
 
     mat-card-actions {
       padding: 8px 16px 16px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
     }
 
     mat-card-actions button {
-      margin-right: 8px;
+      min-width: 100px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 768px) {
+      mat-card-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      mat-card-actions button {
+        width: 100%;
+        min-width: unset;
+      }
     }
   `]
 })

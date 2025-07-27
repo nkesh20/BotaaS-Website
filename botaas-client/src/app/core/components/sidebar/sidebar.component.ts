@@ -7,9 +7,12 @@ import { MatDividerModule } from '@angular/material/divider';
 import { NgIf, NgFor } from '@angular/common';
 import { User } from '../../../models/user.model';
 import { AuthService } from '../../../services/auth.service';
+import { TranslatePipe } from '../../pipes/translate.pipe';
+import { LanguageSelectorComponent } from '../language-selector/language-selector.component';
 
 interface MenuItem {
   label: string;
+  translationKey: string;
   icon: string;
   route: string;
   active?: boolean;
@@ -27,7 +30,9 @@ interface MenuItem {
     MatDividerModule,
     RouterModule,
     NgIf,
-    NgFor
+    NgFor,
+    TranslatePipe,
+    LanguageSelectorComponent
   ]
 })
 export class SidebarComponent implements OnInit {
@@ -36,24 +41,22 @@ export class SidebarComponent implements OnInit {
   menuItems: MenuItem[] = [
     {
       label: 'Dashboard',
+      translationKey: 'navigation.dashboard',
       icon: 'dashboard',
       route: '/dashboard'
     },
     {
       label: 'My Bots',
+      translationKey: 'bots.myBots',
       icon: 'smart_toy',
       route: '/bots'
     },
     {
-      label: 'Add Bot',
-      icon: 'add_circle',
-      route: '/bots/add'
+      label: 'Broadcast',
+      translationKey: 'broadcast.title',
+      icon: 'campaign',
+      route: '/broadcast'
     },
-    {
-      label: 'Profile',
-      icon: 'person',
-      route: '/profile'
-    }
   ];
 
   constructor(

@@ -7,6 +7,7 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { BotService } from '../../../bot-management/services/bot.service';
+import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 
 @Component({
     selector: 'app-bot-status',
@@ -17,14 +18,15 @@ import { BotService } from '../../../bot-management/services/bot.service';
         MatIconModule,
         MatCardModule,
         MatDialogModule,
-        MatProgressSpinnerModule
+        MatProgressSpinnerModule,
+        TranslatePipe
     ],
     template: `
     <mat-card class="bot-status-card">
       <mat-card-header>
         <mat-card-title>
           <mat-icon [color]="getStatusColor()">{{ getStatusIcon() }}</mat-icon>
-          Bot Status
+          {{ 'bots.botStatus' | translate }}
         </mat-card-title>
       </mat-card-header>
       
@@ -43,12 +45,12 @@ import { BotService } from '../../../bot-management/services/bot.service';
               {{ botStatus?.webhook?.is_configured ? 'cloud_done' : 'cloud_off' }}
             </mat-icon>
             <div>
-              <strong>Webhook:</strong>
+              <strong>{{ 'bots.botWebhook' | translate }}:</strong>
               <span [class]="botStatus?.webhook?.is_configured ? 'status-good' : 'status-bad'">
-                {{ botStatus?.webhook?.is_configured ? 'Connected' : 'Not configured' }}
+                {{ botStatus?.webhook?.is_configured ? ('common.connected' | translate) : ('common.notConfigured' | translate) }}
               </span>
               <div *ngIf="!botStatus?.webhook?.is_correct && botStatus?.webhook?.is_configured" class="warning">
-                ⚠️ Webhook URL mismatch - needs fixing
+                ⚠️ {{ 'bots.webhookMismatch' | translate }}
               </div>
             </div>
           </div>
@@ -59,9 +61,9 @@ import { BotService } from '../../../bot-management/services/bot.service';
               {{ botStatus?.flows?.default_flow ? 'account_tree' : 'warning' }}
             </mat-icon>
             <div>
-              <strong>Default Flow:</strong>
+              <strong>{{ 'flows.defaultFlow' | translate }}:</strong>
               <span [class]="botStatus?.flows?.default_flow ? 'status-good' : 'status-bad'">
-                {{ botStatus?.flows?.default_flow?.name || 'None set' }}
+                {{ botStatus?.flows?.default_flow?.name || ('common.noneSet' | translate) }}
               </span>
             </div>
           </div>
@@ -72,9 +74,9 @@ import { BotService } from '../../../bot-management/services/bot.service';
               {{ bot?.is_active ? 'play_circle' : 'pause_circle' }}
             </mat-icon>
             <div>
-              <strong>Status:</strong>
+              <strong>{{ 'common.status' | translate }}:</strong>
               <span [class]="bot?.is_active ? 'status-good' : 'status-bad'">
-                {{ bot?.is_active ? 'Active' : 'Inactive' }}
+                {{ bot?.is_active ? ('common.active' | translate) : ('common.inactive' | translate) }}
               </span>
             </div>
           </div>
@@ -83,9 +85,9 @@ import { BotService } from '../../../bot-management/services/bot.service';
           <div class="status-item">
             <mat-icon color="accent">analytics</mat-icon>
             <div>
-              <strong>Flows:</strong>
-              {{ botStatus?.flows?.total_count || 0 }} total, 
-              {{ botStatus?.flows?.active_count || 0 }} active
+              <strong>{{ 'bots.botFlows' | translate }}:</strong>
+              {{ botStatus?.flows?.total_count || 0 }} {{ 'common.total' | translate }}, 
+              {{ botStatus?.flows?.active_count || 0 }} {{ 'common.active' | translate }}
             </div>
           </div>
         </div>
@@ -94,7 +96,7 @@ import { BotService } from '../../../bot-management/services/bot.service';
       <ng-template #loadingTemplate>
         <mat-card-content class="loading-content">
           <mat-spinner diameter="40"></mat-spinner>
-          <p>Checking bot status...</p>
+          <p>{{ 'bots.checkingStatus' | translate }}</p>
         </mat-card-content>
       </ng-template>
 
@@ -107,7 +109,7 @@ import { BotService } from '../../../bot-management/services/bot.service';
           [disabled]="isLoading"
           *ngIf="needsWebhookFix()">
           <mat-icon>build</mat-icon>
-          Fix Webhook
+          {{ 'bots.fixWebhook' | translate }}
         </button>
 
         <!-- Create Default Flow -->
@@ -117,7 +119,7 @@ import { BotService } from '../../../bot-management/services/bot.service';
           (click)="createDefaultFlow()"
           *ngIf="!botStatus?.flows?.default_flow">
           <mat-icon>add</mat-icon>
-          Create Flow
+          {{ 'flows.createFlow' | translate }}
         </button>
 
         <!-- Test Flow -->
@@ -127,7 +129,7 @@ import { BotService } from '../../../bot-management/services/bot.service';
           (click)="testFlow()"
           [disabled]="isLoading || !isReadyForTesting()">
           <mat-icon>play_arrow</mat-icon>
-          Test Bot
+          {{ 'bots.testBot' | translate }}
         </button>
 
         <!-- Refresh Status -->
@@ -136,7 +138,7 @@ import { BotService } from '../../../bot-management/services/bot.service';
           (click)="refreshStatus()"
           [disabled]="isLoading">
           <mat-icon>refresh</mat-icon>
-          Refresh
+          {{ 'common.refresh' | translate }}
         </button>
       </mat-card-actions>
     </mat-card>
@@ -144,18 +146,18 @@ import { BotService } from '../../../bot-management/services/bot.service';
     <!-- Test Results -->
     <mat-card class="test-results" *ngIf="testResult">
       <mat-card-header>
-        <mat-card-title>Test Result</mat-card-title>
+        <mat-card-title>{{ 'bots.testResult' | translate }}</mat-card-title>
       </mat-card-header>
       <mat-card-content>
         <div class="test-conversation">
           <div class="user-message">
-            <strong>You:</strong> "{{ testResult.input_message }}"
+            <strong>{{ 'common.you' | translate }}:</strong> "{{ testResult.input_message }}"
           </div>
           <div class="bot-message">
             <strong>{{ bot?.first_name }}:</strong> "{{ testResult.bot_response }}"
           </div>
           <div *ngIf="testResult.quick_replies?.length" class="quick-replies">
-            <strong>Quick Replies:</strong> 
+            <strong>{{ 'bots.quickReplies' | translate }}:</strong> 
             <span *ngFor="let reply of testResult.quick_replies" class="reply-chip">{{ reply }}</span>
           </div>
         </div>
