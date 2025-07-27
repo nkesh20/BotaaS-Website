@@ -168,7 +168,7 @@
     "setDefault": "default-ად დაყენება",
     "test": "ტესტი",
     "defaultFlow": "Default Flow",
-    "defaultFlowDescription": "ამჟამად დაყენებულია როგორც default Flow. ეს Flow გააქტიურდება როდესაც მომხმარებლები დაიწყებენ საუბარს თქვენს ბოტთან.",
+    "defaultFlowDescription": "ამჟამად დაყენებულია როგორც default. ეს Flow გააქტიურდება როდესაც მომხმარებლები დაიწყებენ საუბარს თქვენს ბოტთან.",
     "createFlow": "Flow-ს შექმნა"
   },
   "broadcast": {

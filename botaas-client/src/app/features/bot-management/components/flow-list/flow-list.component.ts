@@ -391,10 +391,29 @@ import { TranslatePipe } from '../../../../core/pipes/translate.pipe';
 
     mat-card-actions {
       padding: 8px 16px 16px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
     }
 
     mat-card-actions button {
-      margin-right: 8px;
+      min-width: 100px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 768px) {
+      mat-card-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      mat-card-actions button {
+        width: 100%;
+        min-width: unset;
+      }
     }
   `]
 })
