@@ -209,6 +209,11 @@ export class BotService {
     return this.http.get(url);
   }
 
+  getBotAnalyticsTrend(botId: number, period: string = 'all_time', dataType: string = 'messages'): Observable<any> {
+    const url = `${this.apiUrl}/telegram-bots/${botId}/analytics/trend?period=${period}&data_type=${dataType}`;
+    return this.http.get(url);
+  }
+
   // Enhanced bot creation (webhooks are setup automatically)
   createBot(botData: any): Observable<any> {
     const url = `${this.apiUrl}/telegram-bots`;

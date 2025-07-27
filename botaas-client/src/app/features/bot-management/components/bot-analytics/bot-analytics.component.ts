@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BotService } from '../../services/bot.service';
 import { MatCardModule } from '@angular/material/card';
@@ -6,7 +6,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTabsModule } from '@angular/material/tabs';
 import { CommonModule } from '@angular/common';
+import { Chart } from 'chart.js/auto';
 
 @Component({
   selector: 'app-bot-analytics',
@@ -17,7 +20,9 @@ import { CommonModule } from '@angular/common';
     MatIconModule,
     MatProgressSpinnerModule,
     MatSelectModule,
-    MatFormFieldModule
+    MatFormFieldModule,
+    MatButtonModule,
+    MatTabsModule
   ],
   template: `
     <div class="analytics-container">
@@ -44,58 +49,78 @@ import { CommonModule } from '@angular/common';
         <p>Loading analytics data...</p>
       </div>
 
-      <div *ngIf="!isLoading && analytics" class="analytics-grid">
-        <!-- Chat Count Card -->
-        <mat-card class="analytics-card">
-          <mat-card-content>
-            <div class="metric">
-              <mat-icon class="metric-icon">chat</mat-icon>
-              <div class="metric-content">
-                <h3>{{ analytics.total_chats }}</h3>
-                <p>Total Chats</p>
+      <div *ngIf="!isLoading && analytics" class="analytics-content">
+        <!-- Analytics Cards -->
+        <div class="analytics-grid">
+          <!-- Chat Count Card -->
+          <mat-card class="analytics-card" (click)="showChart('chats')">
+            <mat-card-content>
+              <div class="metric">
+                <mat-icon class="metric-icon">chat</mat-icon>
+                <div class="metric-content">
+                  <h3>{{ analytics.total_chats }}</h3>
+                  <p>Total Chats</p>
+                </div>
               </div>
-            </div>
-          </mat-card-content>
-        </mat-card>
+            </mat-card-content>
+          </mat-card>
 
-        <!-- Message Count Card -->
-        <mat-card class="analytics-card">
-          <mat-card-content>
-            <div class="metric">
-              <mat-icon class="metric-icon">message</mat-icon>
-              <div class="metric-content">
-                <h3>{{ analytics.total_messages }}</h3>
-                <p>Total Messages</p>
+          <!-- Message Count Card -->
+          <mat-card class="analytics-card" (click)="showChart('messages')">
+            <mat-card-content>
+              <div class="metric">
+                <mat-icon class="metric-icon">message</mat-icon>
+                <div class="metric-content">
+                  <h3>{{ analytics.total_messages }}</h3>
+                  <p>Total Messages</p>
+                </div>
               </div>
-            </div>
-          </mat-card-content>
-        </mat-card>
+            </mat-card-content>
+          </mat-card>
 
-        <!-- User Count Card -->
-        <mat-card class="analytics-card">
-          <mat-card-content>
-            <div class="metric">
-              <mat-icon class="metric-icon">people</mat-icon>
-              <div class="metric-content">
-                <h3>{{ analytics.unique_users }}</h3>
-                <p>Unique Users</p>
+          <!-- User Count Card -->
+          <mat-card class="analytics-card" (click)="showChart('users')">
+            <mat-card-content>
+              <div class="metric">
+                <mat-icon class="metric-icon">people</mat-icon>
+                <div class="metric-content">
+                  <h3>{{ analytics.unique_users }}</h3>
+                  <p>Unique Users</p>
+                </div>
               </div>
-            </div>
-          </mat-card-content>
-        </mat-card>
+            </mat-card-content>
+          </mat-card>
 
-        <!-- Banned Users Card -->
-        <mat-card class="analytics-card">
-          <mat-card-content>
-            <div class="metric">
-              <mat-icon class="metric-icon">block</mat-icon>
-              <div class="metric-content">
-                <h3>{{ analytics.banned_users }}</h3>
-                <p>Banned Users</p>
+          <!-- Banned Users Card -->
+          <mat-card class="analytics-card" (click)="showChart('banned_users')">
+            <mat-card-content>
+              <div class="metric">
+                <mat-icon class="metric-icon">block</mat-icon>
+                <div class="metric-content">
+                  <h3>{{ analytics.banned_users }}</h3>
+                  <p>Banned Users</p>
+                </div>
               </div>
-            </div>
-          </mat-card-content>
-        </mat-card>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Chart Section -->
+        <div *ngIf="selectedChartType" class="chart-section">
+          <mat-card class="chart-card">
+            <mat-card-header>
+              <mat-card-title>{{ getChartTitle() }}</mat-card-title>
+              <button mat-icon-button (click)="hideChart()">
+                <mat-icon>close</mat-icon>
+              </button>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="chart-container">
+                <canvas #chartCanvas></canvas>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
       </div>
 
       <div *ngIf="!isLoading && !analytics" class="placeholder">
@@ -127,6 +152,44 @@ import { CommonModule } from '@angular/common';
 
     .period-selector {
       min-width: 200px;
+    }
+
+    .analytics-content {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .chart-section {
+      margin-top: 24px;
+    }
+
+    .chart-card {
+      width: 100%;
+    }
+
+    .chart-card mat-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 16px 0;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 400px;
+      width: 100%;
+      padding: 16px;
+    }
+
+    .analytics-card {
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .analytics-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
     }
 
     h2 {
@@ -250,12 +313,17 @@ import { CommonModule } from '@angular/common';
     }
   `]
 })
-export class BotAnalyticsComponent implements OnInit {
+export class BotAnalyticsComponent implements OnInit, AfterViewInit {
+  @ViewChild('chartCanvas', { static: false }) chartCanvas!: ElementRef;
+  
   botId: string | null = null;
   analytics: any = null;
   isLoading = false;
   error: string | null = null;
   selectedPeriod: string = 'all_time';
+  selectedChartType: string | null = null;
+  currentChart: Chart | null = null;
+  trendData: any = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -288,7 +356,130 @@ export class BotAnalyticsComponent implements OnInit {
     });
   }
 
+  ngAfterViewInit(): void {
+    // Chart will be initialized when needed
+  }
+
   onPeriodChange(): void {
     this.loadAnalytics();
+    if (this.selectedChartType) {
+      this.loadChartData();
+    }
+  }
+
+  showChart(chartType: string): void {
+    this.selectedChartType = chartType;
+    this.loadChartData();
+  }
+
+  hideChart(): void {
+    this.selectedChartType = null;
+    if (this.currentChart) {
+      this.currentChart.destroy();
+      this.currentChart = null;
+    }
+  }
+
+  getChartTitle(): string {
+    const titles: { [key: string]: string } = {
+      'messages': 'Message Trends',
+      'chats': 'Chat Activity',
+      'users': 'User Growth',
+      'banned_users': 'Banned Users'
+    };
+    return titles[this.selectedChartType || ''] || 'Analytics Chart';
+  }
+
+  loadChartData(): void {
+    if (!this.botId || !this.selectedChartType) return;
+
+    this.botService.getBotAnalyticsTrend(
+      parseInt(this.botId), 
+      this.selectedPeriod, 
+      this.selectedChartType
+    ).subscribe({
+      next: (data) => {
+        this.trendData = data.trend_data;
+        this.createChart();
+      },
+      error: (err) => {
+        console.error('Error loading chart data:', err);
+      }
+    });
+  }
+
+  createChart(): void {
+    if (!this.chartCanvas || !this.trendData) return;
+
+    // Destroy existing chart
+    if (this.currentChart) {
+      this.currentChart.destroy();
+    }
+
+    const ctx = this.chartCanvas.nativeElement.getContext('2d');
+    
+    this.currentChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: this.trendData.dates,
+        datasets: [{
+          label: this.getChartTitle(),
+          data: this.trendData.values,
+          borderColor: '#1976d2',
+          backgroundColor: 'rgba(25, 118, 210, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          intersect: false,
+          mode: 'index'
+        },
+        plugins: {
+          legend: {
+            display: true
+          },
+          tooltip: {
+            callbacks: {
+              title: (context) => {
+                return `Date: ${context[0].label}`;
+              },
+              label: (context) => {
+                return `${this.getChartTitle()}: ${context.parsed.y}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            display: true,
+            title: {
+              display: true,
+              text: 'Date'
+            }
+          },
+          y: {
+            display: true,
+            title: {
+              display: true,
+              text: this.getChartTitle()
+            },
+            beginAtZero: true
+          }
+        },
+        onClick: (event, elements) => {
+          if (elements.length > 0) {
+            const index = elements[0].index;
+            const date = this.trendData.dates[index];
+            const value = this.trendData.values[index];
+            alert(`${this.getChartTitle()}\nDate: ${date}\nValue: ${value}`);
+          }
+        }
+      }
+    });
   }
 } 
