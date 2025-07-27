@@ -199,6 +199,11 @@ export class BotService {
     return this.http.post(url, { test_message: message });
   }
 
+  getBotAnalytics(botId: number): Observable<any> {
+    const url = `${this.apiUrl}/telegram-bots/${botId}/analytics`;
+    return this.http.get(url);
+  }
+
   // Enhanced bot creation (webhooks are setup automatically)
   createBot(botData: any): Observable<any> {
     const url = `${this.apiUrl}/telegram-bots`;
