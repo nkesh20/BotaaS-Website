@@ -17,9 +17,17 @@
         <mat-list-item *ngFor="let item of menuItems" [class.active]="isActiveRoute(item.route)"
             (click)="navigateTo(item.route)" class="nav-item">
             <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-            <span matListItemTitle>{{ item.label }}</span>
+            <span matListItemTitle>{{ item.translationKey | translate }}</span>
         </mat-list-item>
     </mat-nav-list>
+
+    <mat-divider></mat-divider>
+
+    <!-- Language Selector -->
+    <div class="language-section">
+        <div class="language-label">{{ 'common.language' | translate }}</div>
+        <app-language-selector></app-language-selector>
+    </div>
 
     <mat-divider></mat-divider>
 
@@ -27,7 +35,7 @@
     <div class="sidebar-footer">
         <button mat-button class="logout-btn" (click)="logout()">
             <mat-icon>logout</mat-icon>
-            <span>Logout</span>
+            <span>{{ 'auth.logout' | translate }}</span>
         </button>
     </div>
 </div>
