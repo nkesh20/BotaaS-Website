@@ -13,8 +13,7 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
     CommonModule,
     MatSelectModule,
     MatFormFieldModule,
-    FormsModule,
-    TranslatePipe
+    FormsModule
   ],
   template: `
     <mat-form-field appearance="outline" class="language-selector">
