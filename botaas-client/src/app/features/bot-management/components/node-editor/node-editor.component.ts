@@ -204,42 +204,42 @@ interface NodeData {
                       <mat-icon>date_range</mat-icon>
                       7 Days
                     </button>
-                                         <button type="button" 
-                             mat-stroked-button 
-                             [class.selected]="banDuration === 'custom'"
-                             (click)="setBanDuration('custom')">
-                       <mat-icon>schedule</mat-icon>
-                       Custom Duration
-                     </button>
+                    <button type="button" 
+                            mat-stroked-button 
+                            [class.selected]="banDuration === 'custom'"
+                            (click)="setBanDuration('custom')">
+                      <mat-icon>schedule</mat-icon>
+                      Custom Duration
+                    </button>
                   </div>
                   
-                                     <div *ngIf="banDuration === 'custom'" class="custom-duration-section">
-                     <div class="duration-input-row">
-                                               <mat-form-field appearance="outline" class="duration-number">
-                          <mat-label>Duration</mat-label>
-                          <input matInput type="number" formControlName="customDurationValue" 
-                                 placeholder="1" min="1" max="365">
-                        </mat-form-field>
-                       
-                                               <mat-form-field appearance="outline" class="duration-unit">
-                          <mat-label>Unit</mat-label>
-                          <mat-select formControlName="customDurationUnit">
-                            <mat-option value="minutes">Minutes</mat-option>
-                            <mat-option value="hours">Hours</mat-option>
-                            <mat-option value="days">Days</mat-option>
-                            <mat-option value="weeks">Weeks</mat-option>
-                            <mat-option value="months">Months</mat-option>
-                          </mat-select>
-                        </mat-form-field>
-                     </div>
-                     
-                                           <div class="duration-preview" *ngIf="isDurationInvalid() || banDuration === 'permanent'">
-                        <mat-icon>{{ isDurationInvalid() ? 'warning' : 'block' }}</mat-icon>
-                        <span>{{ getCustomDurationPreview() }}</span>
-                      </div>
-                   </div>
+                  <div *ngIf="banDuration === 'custom'" class="custom-duration-section">
+                    <div class="duration-input-row">
+                      <mat-form-field appearance="outline" class="duration-number">
+                        <mat-label>Duration</mat-label>
+                        <input matInput type="number" formControlName="customDurationValue" 
+                               placeholder="1" min="1" max="365">
+                      </mat-form-field>
+                      
+                      <mat-form-field appearance="outline" class="duration-unit">
+                        <mat-label>Unit</mat-label>
+                        <mat-select formControlName="customDurationUnit">
+                          <mat-option value="minutes">Minutes</mat-option>
+                          <mat-option value="hours">Hours</mat-option>
+                          <mat-option value="days">Days</mat-option>
+                          <mat-option value="weeks">Weeks</mat-option>
+                          <mat-option value="months">Months</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+                  </div>
                   
-                  
+                  <div class="duration-preview" 
+                       [class.warning]="isDurationInvalid()"
+                       *ngIf="isDurationInvalid() || banDuration === 'permanent'">
+                    <mat-icon>{{ isDurationInvalid() ? 'warning' : 'block' }}</mat-icon>
+                    <span>{{ getCustomDurationPreview() }}</span>
+                  </div>
                 </div>
                 
                 <div class="checkbox-section">
@@ -468,26 +468,24 @@ interface NodeData {
         max-width: 200px;
       }
 
-             .duration-preview {
-         margin-top: 16px;
-         padding: 12px;
-         background-color: #e3f2fd;
-         border-radius: 6px;
-         border-left: 4px solid #1976d2;
-         display: flex;
-         align-items: center;
-         gap: 8px;
-         color: #1976d2;
-         font-size: 14px;
-       }
+      .duration-preview {
+        margin-top: 16px;
+        padding: 12px;
+        background-color: #e3f2fd;
+        border-radius: 6px;
+        border-left: 4px solid #1976d2;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #1976d2;
+        font-size: 14px;
+      }
 
-               .duration-preview.warning {
-          background-color: #fff3e0;
-          border-left-color: #f57c00;
-          color: #e65100;
-        }
-
-
+      .duration-preview.warning {
+        background-color: #fff3e0;
+        border-left-color: #f57c00;
+        color: #e65100;
+      }
 
       .duration-preview mat-icon {
         font-size: 18px;
@@ -599,7 +597,16 @@ export class NodeEditorComponent implements OnInit {
          
          // Set ban duration based on existing data
          if (params.custom_duration_value && params.custom_duration_unit) {
-           this.banDuration = 'custom';
+           // Check if it matches predefined durations
+           if (params.custom_duration_value === 1 && params.custom_duration_unit === 'hours') {
+             this.banDuration = '1hour';
+           } else if (params.custom_duration_value === 24 && params.custom_duration_unit === 'hours') {
+             this.banDuration = '24hours';
+           } else if (params.custom_duration_value === 7 && params.custom_duration_unit === 'days') {
+             this.banDuration = '7days';
+           } else {
+             this.banDuration = 'custom';
+           }
          } else {
            this.banDuration = 'permanent';
          }
@@ -685,6 +692,20 @@ export class NodeEditorComponent implements OnInit {
       this.nodeForm.get('conditionType')?.updateValueAndValidity();
       this.nodeForm.get('conditionValue')?.updateValueAndValidity();
     });
+    
+    // Listen for action type changes to apply validators for ban_chat_member
+    this.nodeForm.get('actionType')?.valueChanges.subscribe(actionType => {
+      if (actionType === 'ban_chat_member') {
+        this.nodeForm.get('customDurationValue')?.setValidators([Validators.required, Validators.min(1), Validators.max(365)]);
+        this.nodeForm.get('customDurationUnit')?.setValidators([Validators.required]);
+      } else {
+        this.nodeForm.get('customDurationValue')?.clearValidators();
+        this.nodeForm.get('customDurationUnit')?.clearValidators();
+      }
+      this.nodeForm.get('customDurationValue')?.updateValueAndValidity();
+      this.nodeForm.get('customDurationUnit')?.updateValueAndValidity();
+    });
+    
     // Also run once on init
     if (this.nodeForm.get('type')?.value === 'condition') {
       this.nodeForm.get('conditionType')?.setValidators([Validators.required]);
@@ -695,6 +716,17 @@ export class NodeEditorComponent implements OnInit {
     }
     this.nodeForm.get('conditionType')?.updateValueAndValidity();
     this.nodeForm.get('conditionValue')?.updateValueAndValidity();
+    
+    // Also run once for action type
+    if (this.nodeForm.get('actionType')?.value === 'ban_chat_member') {
+      this.nodeForm.get('customDurationValue')?.setValidators([Validators.required, Validators.min(1), Validators.max(365)]);
+      this.nodeForm.get('customDurationUnit')?.setValidators([Validators.required]);
+    } else {
+      this.nodeForm.get('customDurationValue')?.clearValidators();
+      this.nodeForm.get('customDurationUnit')?.clearValidators();
+    }
+    this.nodeForm.get('customDurationValue')?.updateValueAndValidity();
+    this.nodeForm.get('customDurationUnit')?.updateValueAndValidity();
   }
 
   addQuickReply() {
@@ -826,22 +858,44 @@ export class NodeEditorComponent implements OnInit {
     
     if (duration === 'permanent') {
       // No need to set any values for permanent ban
+      // Clear validators for custom duration fields
+      this.nodeForm.get('customDurationValue')?.clearValidators();
+      this.nodeForm.get('customDurationUnit')?.clearValidators();
     } else if (duration === '1hour') {
       this.nodeForm.patchValue({ 
         customDurationValue: 1,
         customDurationUnit: 'hours'
       });
+      // Clear validators since we're using predefined values
+      this.nodeForm.get('customDurationValue')?.clearValidators();
+      this.nodeForm.get('customDurationUnit')?.clearValidators();
     } else if (duration === '24hours') {
       this.nodeForm.patchValue({ 
         customDurationValue: 24,
         customDurationUnit: 'hours'
       });
+      // Clear validators since we're using predefined values
+      this.nodeForm.get('customDurationValue')?.clearValidators();
+      this.nodeForm.get('customDurationUnit')?.clearValidators();
     } else if (duration === '7days') {
       this.nodeForm.patchValue({ 
         customDurationValue: 7,
         customDurationUnit: 'days'
       });
+      // Clear validators since we're using predefined values
+      this.nodeForm.get('customDurationValue')?.clearValidators();
+      this.nodeForm.get('customDurationUnit')?.clearValidators();
+    } else if (duration === 'custom') {
+      // Keep existing values for custom duration
+      // The user can modify them through the form controls
+      // Set validators for custom duration fields
+      this.nodeForm.get('customDurationValue')?.setValidators([Validators.required, Validators.min(1), Validators.max(365)]);
+      this.nodeForm.get('customDurationUnit')?.setValidators([Validators.required]);
     }
+    
+    // Update validity
+    this.nodeForm.get('customDurationValue')?.updateValueAndValidity();
+    this.nodeForm.get('customDurationUnit')?.updateValueAndValidity();
   }
 
   getCustomDurationPreview(): string {
