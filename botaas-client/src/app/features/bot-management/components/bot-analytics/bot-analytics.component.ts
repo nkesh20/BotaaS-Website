@@ -362,13 +362,27 @@ export class BotAnalyticsComponent implements OnInit, AfterViewInit {
 
   onPeriodChange(): void {
     this.loadAnalytics();
+    // Always reload chart data if a chart type is selected
     if (this.selectedChartType) {
-      this.loadChartData();
+      // Force refresh the chart by destroying it first
+      if (this.currentChart) {
+        this.currentChart.destroy();
+        this.currentChart = null;
+      }
+      // Small delay to ensure the chart canvas is ready
+      setTimeout(() => {
+        this.loadChartData();
+      }, 100);
     }
   }
 
   showChart(chartType: string): void {
     this.selectedChartType = chartType;
+    // Destroy any existing chart before creating a new one
+    if (this.currentChart) {
+      this.currentChart.destroy();
+      this.currentChart = null;
+    }
     this.loadChartData();
   }
 
@@ -400,23 +414,46 @@ export class BotAnalyticsComponent implements OnInit, AfterViewInit {
     ).subscribe({
       next: (data) => {
         this.trendData = data.trend_data;
-        this.createChart();
+        // Ensure chart is created even if it was previously destroyed
+        setTimeout(() => {
+          this.createChart();
+        }, 150);
       },
       error: (err) => {
         console.error('Error loading chart data:', err);
+        // Clear trend data on error to prevent showing stale data
+        this.trendData = null;
+        if (this.currentChart) {
+          this.currentChart.destroy();
+          this.currentChart = null;
+        }
       }
     });
   }
 
   createChart(): void {
-    if (!this.chartCanvas || !this.trendData) return;
+    if (!this.chartCanvas || !this.trendData) {
+      return;
+    }
+
+    // Check if canvas is properly initialized
+    if (!this.chartCanvas.nativeElement) {
+      setTimeout(() => {
+        this.createChart();
+      }, 100);
+      return;
+    }
 
     // Destroy existing chart
     if (this.currentChart) {
       this.currentChart.destroy();
+      this.currentChart = null;
     }
 
     const ctx = this.chartCanvas.nativeElement.getContext('2d');
+    if (!ctx) {
+      return;
+    }
     
     this.currentChart = new Chart(ctx, {
       type: 'line',
@@ -470,16 +507,15 @@ export class BotAnalyticsComponent implements OnInit, AfterViewInit {
             },
             beginAtZero: true
           }
-        },
-        onClick: (event, elements) => {
-          if (elements.length > 0) {
-            const index = elements[0].index;
-            const date = this.trendData.dates[index];
-            const value = this.trendData.values[index];
-            alert(`${this.getChartTitle()}\nDate: ${date}\nValue: ${value}`);
-          }
         }
       }
     });
+
+    // Force the chart to resize after creation
+    setTimeout(() => {
+      if (this.currentChart) {
+        this.currentChart.resize();
+      }
+    }, 100);
   }
 } 
