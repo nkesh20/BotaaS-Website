@@ -148,6 +148,7 @@ interface NodeData {
                   <mat-option value="log_event">Log Event</mat-option>
                   <mat-option value="notify_owner">Notify Bot Owner</mat-option>
                   <mat-option value="ban_chat_member">Ban Chat Member</mat-option>
+                  <mat-option value="delete_message">Delete Message</mat-option>
                 </mat-select>
               </mat-form-field>
 
@@ -248,6 +249,20 @@ interface NodeData {
                   </mat-checkbox>
                   <div class="help-text">Delete all messages from the user in the chat</div>
                 </div>
+              </div>
+
+              <!-- Delete Message Settings -->
+              <div *ngIf="nodeForm.get('actionType')?.value === 'delete_message'">
+                <div class="help-section">
+                  <h4>Delete Message Action</h4>
+                  <p>This action will delete a message from the chat. You can specify a specific message ID or leave it empty to delete the message that triggered this flow.</p>
+                </div>
+                
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Message ID (Optional)</mat-label>
+                  <input matInput formControlName="deleteMessageId" placeholder="Enter message ID to delete">
+                  <mat-hint>Leave empty to delete the message that triggered this flow</mat-hint>
+                </mat-form-field>
               </div>
             </div>
 
@@ -533,7 +548,8 @@ export class NodeEditorComponent implements OnInit {
       endMessage: [''],
              customDurationValue: [1], // New field for custom duration value
        customDurationUnit: ['hours'], // New field for custom duration unit
-       revokeMessages: [false] // New field
+       revokeMessages: [false], // New field
+       deleteMessageId: [''] // New field for delete message ID
     });
 
     this.quickReplies = this.fb.array([]);
@@ -625,6 +641,18 @@ export class NodeEditorComponent implements OnInit {
        }
      }
 
+    // If this is an action node with action_params, parse and set deleteMessageId
+    if (data.type === 'action' && data.action_type === 'delete_message' && data.action_params) {
+      try {
+        const params = JSON.parse(data.action_params);
+        this.nodeForm.patchValue({
+          deleteMessageId: params.message_id || ''
+        });
+      } catch (e) {
+        // If parsing fails, leave as empty
+      }
+    }
+
     // Load quick replies
     if (data.quick_replies && Array.isArray(data.quick_replies)) {
       data.quick_replies.forEach((reply: string) => {
@@ -662,7 +690,8 @@ export class NodeEditorComponent implements OnInit {
                  notifyOwnerMessage: '', // Reset new field
          customDurationValue: 1, // Reset new field
          customDurationUnit: 'hours', // Reset new field
-         revokeMessages: false // Reset new field
+         revokeMessages: false, // Reset new field
+         deleteMessageId: '' // Reset new field
       });
     }
     
@@ -828,6 +857,12 @@ export class NodeEditorComponent implements OnInit {
                custom_duration_value: this.banDuration === 'permanent' ? null : formValue.customDurationValue,
                custom_duration_unit: this.banDuration === 'permanent' ? null : formValue.customDurationUnit,
                revoke_messages: formValue.revokeMessages
+             });
+           }
+           // New: delete_message
+           if (formValue.actionType === 'delete_message') {
+             nodeData.action_params = JSON.stringify({
+               message_id: formValue.deleteMessageId || null
              });
            }
           break;
