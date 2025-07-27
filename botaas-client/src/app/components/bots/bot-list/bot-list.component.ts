@@ -14,8 +14,8 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { NgFor, NgIf } from '@angular/common';
 import { BotStatusComponent } from '../../../features/bots/pages/bot-detail/bot-status.component';
 import { MatDividerModule } from '@angular/material/divider';
+import { TranslatePipe } from '../../../core/pipes/translate.pipe';
 
-// Import your BotStatusComponent
 
 @Component({
     selector: 'app-bot-list',
@@ -35,7 +35,8 @@ import { MatDividerModule } from '@angular/material/divider';
         MatDividerModule,
         NgFor,
         NgIf,
-        BotStatusComponent
+        BotStatusComponent,
+        TranslatePipe
     ]
 })
 export class BotListComponent implements OnInit {
@@ -115,12 +116,10 @@ export class BotListComponent implements OnInit {
         this.router.navigate(['/bots', bot.id, 'edit']);
     }
 
-    // Add method to manage flows
     manageFlows(bot: TelegramBot): void {
         this.router.navigate(['/bots', bot.id, 'flows']);
     }
 
-    // Add method to view bot status details
     viewBotDetails(bot: TelegramBot): void {
         this.router.navigate(['/bots', bot.id]);
     }
