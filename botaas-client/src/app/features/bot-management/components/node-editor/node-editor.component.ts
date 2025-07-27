@@ -11,6 +11,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+
 
 interface NodeData {
   id: string;
@@ -33,8 +35,9 @@ interface NodeData {
     MatChipsModule,
     MatIconModule,
     MatTabsModule,
-    MatCardModule,
-    MatDividerModule
+         MatCardModule,
+     MatDividerModule,
+     MatCheckboxModule
   ],
   template: `
     <h2 mat-dialog-title>
@@ -144,6 +147,7 @@ interface NodeData {
                   <mat-option value="send_email">Send Email</mat-option>
                   <mat-option value="log_event">Log Event</mat-option>
                   <mat-option value="notify_owner">Notify Bot Owner</mat-option>
+                  <mat-option value="ban_chat_member">Ban Chat Member</mat-option>
                 </mat-select>
               </mat-form-field>
 
@@ -165,6 +169,85 @@ interface NodeData {
                   <textarea matInput formControlName="notifyOwnerMessage" rows="3" placeholder="Enter the message to send to the bot owner"></textarea>
                   <mat-hint>You can use variables like <span>{{'{{user_id}}'}}</span> in your message.</mat-hint>
                 </mat-form-field>
+              </div>
+
+              <!-- Ban Chat Member Settings -->
+              <div *ngIf="nodeForm.get('actionType')?.value === 'ban_chat_member'">
+                <div class="ban-duration-section">
+                  <h4>Ban Duration</h4>
+                  <div class="duration-options">
+                    <button type="button" 
+                            mat-stroked-button 
+                            [class.selected]="banDuration === 'permanent'"
+                            (click)="setBanDuration('permanent')">
+                      <mat-icon>block</mat-icon>
+                      Permanent Ban
+                    </button>
+                    <button type="button" 
+                            mat-stroked-button 
+                            [class.selected]="banDuration === '1hour'"
+                            (click)="setBanDuration('1hour')">
+                      <mat-icon>schedule</mat-icon>
+                      1 Hour
+                    </button>
+                    <button type="button" 
+                            mat-stroked-button 
+                            [class.selected]="banDuration === '24hours'"
+                            (click)="setBanDuration('24hours')">
+                      <mat-icon>today</mat-icon>
+                      24 Hours
+                    </button>
+                    <button type="button" 
+                            mat-stroked-button 
+                            [class.selected]="banDuration === '7days'"
+                            (click)="setBanDuration('7days')">
+                      <mat-icon>date_range</mat-icon>
+                      7 Days
+                    </button>
+                    <button type="button" 
+                            mat-stroked-button 
+                            [class.selected]="banDuration === 'custom'"
+                            (click)="setBanDuration('custom')">
+                      <mat-icon>schedule</mat-icon>
+                      Custom Duration
+                    </button>
+                  </div>
+                  
+                  <div *ngIf="banDuration === 'custom'" class="custom-duration-section">
+                    <div class="duration-input-row">
+                      <mat-form-field appearance="outline" class="duration-number">
+                        <mat-label>Duration</mat-label>
+                        <input matInput type="number" formControlName="customDurationValue" 
+                               placeholder="1" min="1" max="365">
+                      </mat-form-field>
+                      
+                      <mat-form-field appearance="outline" class="duration-unit">
+                        <mat-label>Unit</mat-label>
+                        <mat-select formControlName="customDurationUnit">
+                          <mat-option value="minutes">Minutes</mat-option>
+                          <mat-option value="hours">Hours</mat-option>
+                          <mat-option value="days">Days</mat-option>
+                          <mat-option value="weeks">Weeks</mat-option>
+                          <mat-option value="months">Months</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  
+                  <div class="duration-preview" 
+                       [class.warning]="isDurationInvalid()"
+                       *ngIf="isDurationInvalid() || banDuration === 'permanent'">
+                    <mat-icon>{{ isDurationInvalid() ? 'warning' : 'block' }}</mat-icon>
+                    <span>{{ getCustomDurationPreview() }}</span>
+                  </div>
+                </div>
+                
+                <div class="checkbox-section">
+                  <mat-checkbox formControlName="revokeMessages" color="primary">
+                    Revoke Messages
+                  </mat-checkbox>
+                  <div class="help-text">Delete all messages from the user in the chat</div>
+                </div>
               </div>
             </div>
 
@@ -316,11 +399,113 @@ interface NodeData {
       margin: 4px 0;
       font-size: 14px;
     }
+
+    .checkbox-section {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+         .checkbox-section .help-text {
+       margin-top: 0;
+       margin-bottom: 0;
+     }
+
+     .ban-duration-section {
+       margin-bottom: 24px;
+     }
+
+     .ban-duration-section h4 {
+       margin: 0 0 16px 0;
+       color: #333;
+       font-weight: 500;
+     }
+
+     .duration-options {
+       display: flex;
+       flex-wrap: wrap;
+       gap: 8px;
+       margin-bottom: 16px;
+     }
+
+     .duration-options button {
+       min-width: 120px;
+       height: 40px;
+       border-radius: 20px;
+       transition: all 0.2s ease;
+     }
+
+     .duration-options button.selected {
+       background-color: #1976d2;
+       color: white;
+       border-color: #1976d2;
+     }
+
+     .duration-options button:hover:not(.selected) {
+       background-color: #f5f5f5;
+       border-color: #1976d2;
+     }
+
+     .duration-options button mat-icon {
+       margin-right: 4px;
+       font-size: 18px;
+     }
+
+           .custom-duration-section {
+        margin-top: 16px;
+        padding: 16px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+      }
+
+      .duration-input-row {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+      }
+
+      .duration-number {
+        flex: 1;
+        max-width: 150px;
+      }
+
+      .duration-unit {
+        flex: 1;
+        max-width: 200px;
+      }
+
+      .duration-preview {
+        margin-top: 16px;
+        padding: 12px;
+        background-color: #e3f2fd;
+        border-radius: 6px;
+        border-left: 4px solid #1976d2;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #1976d2;
+        font-size: 14px;
+      }
+
+      .duration-preview.warning {
+        background-color: #fff3e0;
+        border-left-color: #f57c00;
+        color: #e65100;
+      }
+
+      .duration-preview mat-icon {
+        font-size: 18px;
+      }
+
+     
   `]
 })
 export class NodeEditorComponent implements OnInit {
   nodeForm: FormGroup;
   quickReplies: FormArray;
+  banDuration: string = 'permanent';
 
   constructor(
     private fb: FormBuilder,
@@ -345,7 +530,10 @@ export class NodeEditorComponent implements OnInit {
       webhookResponseVariables: ['[]'], // New field
       inputType: ['text'],
       inputVariableName: [''],
-      endMessage: ['']
+      endMessage: [''],
+             customDurationValue: [1], // New field for custom duration value
+       customDurationUnit: ['hours'], // New field for custom duration unit
+       revokeMessages: [false] // New field
     });
 
     this.quickReplies = this.fb.array([]);
@@ -376,7 +564,10 @@ export class NodeEditorComponent implements OnInit {
       webhookResponseVariables: JSON.stringify(data.response_variables || []), // New field
       inputType: data.input_type || 'text',
       inputVariableName: data.variable_name || '',
-      endMessage: data.content || ''
+             endMessage: data.content || '',
+       customDurationValue: data.custom_duration_value || 1, // Load custom duration value
+       customDurationUnit: data.custom_duration_unit || 'hours', // Load custom duration unit
+       revokeMessages: data.revoke_messages || false // Load revokeMessages
     });
 
     // If this is an action node with action_params, parse and set variableName/variableValue
@@ -403,6 +594,36 @@ export class NodeEditorComponent implements OnInit {
         // If parsing fails, leave as empty
       }
     }
+
+         // If this is an action node with action_params, parse and set custom duration and revokeMessages
+     if (data.type === 'action' && data.action_type === 'ban_chat_member' && data.action_params) {
+       try {
+         const params = JSON.parse(data.action_params);
+         this.nodeForm.patchValue({
+           customDurationValue: params.custom_duration_value || 1,
+           customDurationUnit: params.custom_duration_unit || 'hours',
+           revokeMessages: params.revoke_messages || false
+         });
+         
+         // Set ban duration based on existing data
+         if (params.custom_duration_value && params.custom_duration_unit) {
+           // Check if it matches predefined durations
+           if (params.custom_duration_value === 1 && params.custom_duration_unit === 'hours') {
+             this.banDuration = '1hour';
+           } else if (params.custom_duration_value === 24 && params.custom_duration_unit === 'hours') {
+             this.banDuration = '24hours';
+           } else if (params.custom_duration_value === 7 && params.custom_duration_unit === 'days') {
+             this.banDuration = '7days';
+           } else {
+             this.banDuration = 'custom';
+           }
+         } else {
+           this.banDuration = 'permanent';
+         }
+       } catch (e) {
+         // If parsing fails, leave as empty
+       }
+     }
 
     // Load quick replies
     if (data.quick_replies && Array.isArray(data.quick_replies)) {
@@ -438,7 +659,10 @@ export class NodeEditorComponent implements OnInit {
         actionType: 'set_variable',
         variableName: '',
         variableValue: '',
-        notifyOwnerMessage: '' // Reset new field
+                 notifyOwnerMessage: '', // Reset new field
+         customDurationValue: 1, // Reset new field
+         customDurationUnit: 'hours', // Reset new field
+         revokeMessages: false // Reset new field
       });
     }
     
@@ -479,6 +703,20 @@ export class NodeEditorComponent implements OnInit {
       this.nodeForm.get('conditionType')?.updateValueAndValidity();
       this.nodeForm.get('conditionValue')?.updateValueAndValidity();
     });
+    
+    // Listen for action type changes to apply validators for ban_chat_member
+    this.nodeForm.get('actionType')?.valueChanges.subscribe(actionType => {
+      if (actionType === 'ban_chat_member') {
+        this.nodeForm.get('customDurationValue')?.setValidators([Validators.required, Validators.min(1), Validators.max(365)]);
+        this.nodeForm.get('customDurationUnit')?.setValidators([Validators.required]);
+      } else {
+        this.nodeForm.get('customDurationValue')?.clearValidators();
+        this.nodeForm.get('customDurationUnit')?.clearValidators();
+      }
+      this.nodeForm.get('customDurationValue')?.updateValueAndValidity();
+      this.nodeForm.get('customDurationUnit')?.updateValueAndValidity();
+    });
+    
     // Also run once on init
     if (this.nodeForm.get('type')?.value === 'condition') {
       this.nodeForm.get('conditionType')?.setValidators([Validators.required]);
@@ -489,6 +727,17 @@ export class NodeEditorComponent implements OnInit {
     }
     this.nodeForm.get('conditionType')?.updateValueAndValidity();
     this.nodeForm.get('conditionValue')?.updateValueAndValidity();
+    
+    // Also run once for action type
+    if (this.nodeForm.get('actionType')?.value === 'ban_chat_member') {
+      this.nodeForm.get('customDurationValue')?.setValidators([Validators.required, Validators.min(1), Validators.max(365)]);
+      this.nodeForm.get('customDurationUnit')?.setValidators([Validators.required]);
+    } else {
+      this.nodeForm.get('customDurationValue')?.clearValidators();
+      this.nodeForm.get('customDurationUnit')?.clearValidators();
+    }
+    this.nodeForm.get('customDurationValue')?.updateValueAndValidity();
+    this.nodeForm.get('customDurationUnit')?.updateValueAndValidity();
   }
 
   addQuickReply() {
@@ -573,6 +822,14 @@ export class NodeEditorComponent implements OnInit {
               message: formValue.notifyOwnerMessage
             });
           }
+                     // New: ban_chat_member
+           if (formValue.actionType === 'ban_chat_member') {
+             nodeData.action_params = JSON.stringify({
+               custom_duration_value: this.banDuration === 'permanent' ? null : formValue.customDurationValue,
+               custom_duration_unit: this.banDuration === 'permanent' ? null : formValue.customDurationUnit,
+               revoke_messages: formValue.revokeMessages
+             });
+           }
           break;
         case 'webhook':
           nodeData.webhook_url = formValue.webhookUrl;
@@ -611,5 +868,100 @@ export class NodeEditorComponent implements OnInit {
   isCreateMode(): boolean {
     // Disable delete if this is a new node (not yet persisted)
     return !!this.data.isNew;
+  }
+
+  setBanDuration(duration: string) {
+    this.banDuration = duration;
+    
+    if (duration === 'permanent') {
+      // No need to set any values for permanent ban
+      // Clear validators for custom duration fields
+      this.nodeForm.get('customDurationValue')?.clearValidators();
+      this.nodeForm.get('customDurationUnit')?.clearValidators();
+    } else if (duration === '1hour') {
+      this.nodeForm.patchValue({ 
+        customDurationValue: 1,
+        customDurationUnit: 'hours'
+      });
+      // Clear validators since we're using predefined values
+      this.nodeForm.get('customDurationValue')?.clearValidators();
+      this.nodeForm.get('customDurationUnit')?.clearValidators();
+    } else if (duration === '24hours') {
+      this.nodeForm.patchValue({ 
+        customDurationValue: 24,
+        customDurationUnit: 'hours'
+      });
+      // Clear validators since we're using predefined values
+      this.nodeForm.get('customDurationValue')?.clearValidators();
+      this.nodeForm.get('customDurationUnit')?.clearValidators();
+    } else if (duration === '7days') {
+      this.nodeForm.patchValue({ 
+        customDurationValue: 7,
+        customDurationUnit: 'days'
+      });
+      // Clear validators since we're using predefined values
+      this.nodeForm.get('customDurationValue')?.clearValidators();
+      this.nodeForm.get('customDurationUnit')?.clearValidators();
+    } else if (duration === 'custom') {
+      // Keep existing values for custom duration
+      // The user can modify them through the form controls
+      // Set validators for custom duration fields
+      this.nodeForm.get('customDurationValue')?.setValidators([Validators.required, Validators.min(1), Validators.max(365)]);
+      this.nodeForm.get('customDurationUnit')?.setValidators([Validators.required]);
+    }
+    
+    // Update validity
+    this.nodeForm.get('customDurationValue')?.updateValueAndValidity();
+    this.nodeForm.get('customDurationUnit')?.updateValueAndValidity();
+  }
+
+  getCustomDurationPreview(): string {
+    if (this.banDuration === 'permanent') {
+      return 'Never (Permanent Ban)';
+    }
+    
+    const value = this.nodeForm.get('customDurationValue')?.value;
+    const unit = this.nodeForm.get('customDurationUnit')?.value;
+    
+    if (!value || !unit) {
+      return '';
+    }
+    
+    const totalMinutes = this.calculateTotalMinutes(value, unit);
+    if (totalMinutes < 0.5) {
+      return 'Duration too short - will result in permanent ban';
+    }
+    if (totalMinutes >= 525600) {
+      return 'Duration too long - will result in permanent ban';
+    }
+    
+    return '';
+  }
+
+  private calculateTotalMinutes(value: number, unit: string): number {
+    switch (unit) {
+      case 'minutes': return value;
+      case 'hours': return value * 60;
+      case 'days': return value * 24 * 60;
+      case 'weeks': return value * 7 * 24 * 60;
+      case 'months': return value * 30 * 24 * 60;
+      default: return 0;
+    }
+  }
+
+  isDurationInvalid(): boolean {
+    if (this.banDuration === 'permanent') {
+      return false;
+    }
+    
+    const value = this.nodeForm.get('customDurationValue')?.value;
+    const unit = this.nodeForm.get('customDurationUnit')?.value;
+    
+    if (!value || !unit) {
+      return false;
+    }
+    
+    const totalMinutes = this.calculateTotalMinutes(value, unit);
+    return totalMinutes < 0.5 || totalMinutes >= 525600;
   }
 } 
