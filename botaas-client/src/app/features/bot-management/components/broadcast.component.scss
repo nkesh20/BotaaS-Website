@@ -19,10 +19,19 @@ mat-card-title {
   flex-direction: row;
   gap: 1rem;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
 }
 
 .form-group {
   flex-direction: column;
+  width: 100%;
+}
+
+.form-row {
+  > mat-form-field {
+    flex: 1;
+    min-width: 200px;
+  }
 }
 
 .full-width {
@@ -39,32 +48,62 @@ mat-progress-spinner {
   margin-right: 8px;
 }
 
-.variables-info {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-  padding-right: 0.5rem;
-  span {
-    font-weight: 500;
-    color: #555;
-    margin-right: 0.5rem;
-    white-space: nowrap;
+.variables-section {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+
+  h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
   }
-  button {
-    font-size: 0.95em;
-    padding: 2px 10px;
-    min-width: unset;
-    line-height: 1.2;
-    border-radius: 16px;
-    background: #f5f5f5;
-    border: 1px solid #d1d5db;
-    color: #1976d2;
-    transition: background 0.2s;
-    margin-bottom: 2px;
+
+  .variables-description {
+    margin: 0 0 1rem 0;
+    font-size: 0.875rem;
+    color: #666;
+    line-height: 1.4;
+  }
+
+  .variables-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .variable-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    background: white;
+    border: 1px solid #dee2e6;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    min-height: 48px;
+    width: 100%;
+
     &:hover {
-      background: #e3e8ef;
+      background: #e3f2fd;
+      border-color: #1976d2;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(25, 118, 210, 0.15);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    .variable-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #333;
+      text-align: center;
     }
   }
 } 
