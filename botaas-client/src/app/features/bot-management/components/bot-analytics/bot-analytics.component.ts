@@ -4,6 +4,8 @@ import { BotService } from '../../services/bot.service';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -13,12 +15,29 @@ import { CommonModule } from '@angular/common';
     CommonModule,
     MatCardModule,
     MatIconModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatSelectModule,
+    MatFormFieldModule
   ],
   template: `
     <div class="analytics-container">
-      <h2>Bot Analytics</h2>
-      <p *ngIf="botId">Analytics for Bot ID: {{ botId }}</p>
+      <div class="analytics-header">
+        <div>
+          <h2>Bot Analytics</h2>
+          <p *ngIf="botId">Analytics for Bot ID: {{ botId }}</p>
+        </div>
+
+        <mat-form-field appearance="outline" class="period-selector">
+          <mat-label>Time Period</mat-label>
+          <mat-select [(value)]="selectedPeriod" (selectionChange)="onPeriodChange()">
+            <mat-option value="1_day">Last 24 Hours</mat-option>
+            <mat-option value="1_week">Last Week</mat-option>
+            <mat-option value="1_month">Last Month</mat-option>
+            <mat-option value="1_year">Last Year</mat-option>
+            <mat-option value="all_time">All Time</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
       
       <div *ngIf="isLoading" class="loading-section">
         <mat-spinner diameter="40"></mat-spinner>
@@ -97,6 +116,17 @@ import { CommonModule } from '@angular/common';
       padding: 32px;
       max-width: 1200px;
       margin: 0 auto;
+    }
+
+    .analytics-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .period-selector {
+      min-width: 200px;
     }
 
     h2 {
@@ -225,6 +255,7 @@ export class BotAnalyticsComponent implements OnInit {
   analytics: any = null;
   isLoading = false;
   error: string | null = null;
+  selectedPeriod: string = 'all_time';
 
   constructor(
     private route: ActivatedRoute,
@@ -244,7 +275,7 @@ export class BotAnalyticsComponent implements OnInit {
     this.isLoading = true;
     this.error = null;
 
-    this.botService.getBotAnalytics(parseInt(this.botId)).subscribe({
+    this.botService.getBotAnalytics(parseInt(this.botId), this.selectedPeriod).subscribe({
       next: (data) => {
         this.analytics = data.analytics;
         this.isLoading = false;
@@ -255,5 +286,9 @@ export class BotAnalyticsComponent implements OnInit {
         console.error('Analytics error:', err);
       }
     });
+  }
+
+  onPeriodChange(): void {
+    this.loadAnalytics();
   }
 } 
