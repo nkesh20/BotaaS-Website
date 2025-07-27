@@ -64,6 +64,19 @@ import { CommonModule } from '@angular/common';
             </div>
           </mat-card-content>
         </mat-card>
+
+        <!-- Banned Users Card -->
+        <mat-card class="analytics-card">
+          <mat-card-content>
+            <div class="metric">
+              <mat-icon class="metric-icon">block</mat-icon>
+              <div class="metric-content">
+                <h3>{{ analytics.banned_users }}</h3>
+                <p>Banned Users</p>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
       </div>
 
       <div *ngIf="!isLoading && !analytics" class="placeholder">
