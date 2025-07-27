@@ -861,9 +861,16 @@ export class NodeEditorComponent implements OnInit {
            }
            // New: delete_message
            if (formValue.actionType === 'delete_message') {
-             nodeData.action_params = JSON.stringify({
-               message_id: formValue.deleteMessageId || null
-             });
+             // If deleteMessageId is empty or null, don't include message_id in params
+             // This will make the backend use trigger_message_id
+             const messageId = formValue.deleteMessageId?.trim();
+             if (messageId) {
+               nodeData.action_params = JSON.stringify({
+                 message_id: messageId
+               });
+             } else {
+               nodeData.action_params = JSON.stringify({});
+             }
            }
           break;
         case 'webhook':
