@@ -4,25 +4,25 @@
         <button mat-icon-button (click)="onCancel()" class="back-button">
             <mat-icon>arrow_back</mat-icon>
         </button>
-        <h1>Add New Telegram Bot</h1>
+        <h1>{{ 'bots.addNewBot' | translate }}</h1>
     </div>
 
     <!-- Instructions Card -->
     <mat-card class="instructions-card">
         <mat-card-header>
             <mat-icon mat-card-avatar>info</mat-icon>
-            <mat-card-title>How to get your bot token</mat-card-title>
+            <mat-card-title>{{ 'bots.howToGetToken' | translate }}</mat-card-title>
         </mat-card-header>
         <mat-card-content>
             <ol>
-                <li>Open Telegram and search for <strong>BotFather</strong></li>
-                <li>Start a chat and send <code>/newbot</code></li>
-                <li>Follow the instructions to create your bot</li>
-                <li>Copy the bot token that BotFather provides</li>
-                <li>Paste the token in the form below</li>
+                <li>{{ 'bots.instruction1' | translate }}</li>
+                <li>{{ 'bots.instruction2' | translate }}</li>
+                <li>{{ 'bots.instruction3' | translate }}</li>
+                <li>{{ 'bots.instruction4' | translate }}</li>
+                <li>{{ 'bots.instruction5' | translate }}</li>
             </ol>
             <p class="token-format">
-                <strong>Token format:</strong> <code>123456789:ABCdefGHIjklMNOpqrsTUVwxyz</code>
+                <strong>{{ 'bots.tokenFormat' | translate }}:</strong> <code>123456789:ABCdefGHIjklMNOpqrsTUVwxyz</code>
             </p>
         </mat-card-content>
     </mat-card>
@@ -31,34 +31,34 @@
     <mat-card class="form-card">
         <mat-card-header>
             <mat-icon mat-card-avatar>smart_toy</mat-icon>
-            <mat-card-title>Bot Configuration</mat-card-title>
-            <mat-card-subtitle>Enter your Telegram bot token</mat-card-subtitle>
+            <mat-card-title>{{ 'bots.botConfiguration' | translate }}</mat-card-title>
+            <mat-card-subtitle>{{ 'bots.enterBotToken' | translate }}</mat-card-subtitle>
         </mat-card-header>
 
         <mat-card-content>
             <form [formGroup]="addBotForm" (ngSubmit)="onSubmit()">
                 <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Bot Token</mat-label>
+                    <mat-label>{{ 'bots.botToken' | translate }}</mat-label>
                     <input matInput formControlName="token" placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
                         [disabled]="isSubmitting">
                     <mat-icon matSuffix>vpn_key</mat-icon>
                     <mat-error *ngIf="addBotForm.get('token')?.invalid && addBotForm.get('token')?.touched">
                         {{ getTokenError() }}
                     </mat-error>
-                    <mat-hint>Get this token from BotFather on Telegram</mat-hint>
+                    <mat-hint>{{ 'bots.getTokenFromBotFather' | translate }}</mat-hint>
                 </mat-form-field>
             </form>
         </mat-card-content>
 
         <mat-card-actions align="end">
             <button mat-button type="button" (click)="onCancel()" [disabled]="isSubmitting">
-                Cancel
+                {{ 'common.cancel' | translate }}
             </button>
             <button mat-raised-button color="primary" type="submit" (click)="onSubmit()"
                 [disabled]="addBotForm.invalid || isSubmitting">
                 <mat-spinner *ngIf="isSubmitting" diameter="20"></mat-spinner>
                 <mat-icon *ngIf="!isSubmitting">add</mat-icon>
-                {{ isSubmitting ? 'Adding Bot...' : 'Add Bot' }}
+                {{ isSubmitting ? ('bots.addingBot' | translate) : ('bots.addBot' | translate) }}
             </button>
         </mat-card-actions>
     </mat-card>
@@ -69,9 +69,8 @@
             <div class="security-notice">
                 <mat-icon color="warn">security</mat-icon>
                 <div>
-                    <strong>Security Notice:</strong>
-                    <p>Your bot token will be stored securely and used only to manage your bot through our platform.
-                        Never share your bot token with untrusted parties.</p>
+                    <strong>{{ 'bots.securityNotice' | translate }}:</strong>
+                    <p>{{ 'bots.securityDescription' | translate }}</p>
                 </div>
             </div>
         </mat-card-content>

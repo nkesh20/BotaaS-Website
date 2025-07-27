@@ -10,6 +10,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { NgIf } from '@angular/common';
+import { TranslatePipe } from '../../../core/pipes/translate.pipe';
+import { TranslationService } from '../../../core/services/translation.service';
 
 @Component({
     selector: 'app-bot-add',
@@ -25,7 +27,8 @@ import { NgIf } from '@angular/common';
         MatIconModule,
         MatProgressSpinnerModule,
         MatSnackBarModule,
-        NgIf
+        NgIf,
+        TranslatePipe
     ]
 })
 export class AddBotComponent implements OnInit {
@@ -36,7 +39,8 @@ export class AddBotComponent implements OnInit {
         private formBuilder: FormBuilder,
         private telegramBotService: TelegramBotService,
         private router: Router,
-        private snackBar: MatSnackBar
+        private snackBar: MatSnackBar,
+        private translationService: TranslationService
     ) { }
 
     ngOnInit(): void {
@@ -60,23 +64,23 @@ export class AddBotComponent implements OnInit {
 
             this.telegramBotService.createBot(formData).subscribe({
                 next: (bot) => {
-                    this.showSnackBar('Bot added successfully!', 'success');
+                    this.showSnackBar(this.translationService.translate('bots.botAddedSuccess'), 'success');
                     this.router.navigate(['/bots']);
                 },
                 error: (error) => {
                     console.error('Error adding bot:', error);
                     this.isSubmitting = false;
 
-                    let errorMessage = 'Failed to add bot. Please try again.';
+                    let errorMessage = this.translationService.translate('bots.failedToAddBot');
 
                     if (error.error?.detail) {
                         errorMessage = error.error.detail;
                     } else if (error.status === 400) {
-                        errorMessage = 'Invalid bot token or bot already exists.';
+                        errorMessage = this.translationService.translate('bots.invalidTokenOrExists');
                     } else if (error.status === 401) {
-                        errorMessage = 'You are not authorized. Please log in again.';
+                        errorMessage = this.translationService.translate('bots.notAuthorized');
                     } else if (error.status === 408) {
-                        errorMessage = 'Timeout while connecting to Telegram. Please try again.';
+                        errorMessage = this.translationService.translate('bots.timeoutError');
                     }
 
                     this.showSnackBar(errorMessage, 'error');
@@ -94,11 +98,11 @@ export class AddBotComponent implements OnInit {
         const tokenControl = this.addBotForm.get('token');
 
         if (tokenControl?.hasError('required')) {
-            return 'Bot token is required';
+            return this.translationService.translate('bots.tokenRequired');
         }
 
         if (tokenControl?.hasError('pattern')) {
-            return 'Invalid token format. Token should be like: 123456789:ABCdefGHIjklMNOpqrsTUVwxyz';
+            return this.translationService.translate('bots.invalidTokenFormat');
         }
 
         return '';
