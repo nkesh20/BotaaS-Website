@@ -128,14 +128,34 @@ interface NodeData {
                   <mat-option value="email">Is Email</mat-option>
                   <mat-option value="phone_number">Is Phone Number</mat-option>
                   <mat-option value="date">Is Date</mat-option>
+                  <mat-option value="toxicity">Is Toxic</mat-option>
                   <mat-option value="regex">Regular Expression</mat-option>
                 </mat-select>
               </mat-form-field>
-              <mat-form-field appearance="outline" class="full-width">
+              <mat-form-field appearance="outline" class="full-width" *ngIf="nodeForm.get('conditionType')?.value !== 'toxicity'">
                 <mat-label>Condition Value</mat-label>
                 <input matInput formControlName="conditionValue" 
                        placeholder="Enter the value to check against">
               </mat-form-field>
+              
+              <!-- Toxicity Slider -->
+              <div *ngIf="nodeForm.get('conditionType')?.value === 'toxicity'" class="toxicity-slider-section">
+                <div class="slider-header">
+                  <label class="slider-label">Sensitivity</label>
+                  <span class="sensitivity-level" [class]="getSensitivityLevel()">{{ getSensitivityLevel() }}</span>
+                </div>
+                <div class="slider-container">
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="100" 
+                    step="1"
+                    [value]="(nodeForm.get('toxicity_sensitivity')?.value ?? 0.5) * 100"
+                    class="toxicity-slider"
+                    (input)="onToxicitySliderChange($event)">
+                  <span class="slider-value">{{ (nodeForm.get('toxicity_sensitivity')?.value ?? 0.5) | number:'1.2-2' }}</span>
+                </div>
+              </div>
             </div>
 
             <!-- Action Node Settings -->
@@ -510,12 +530,104 @@ interface NodeData {
         color: #e65100;
       }
 
-      .duration-preview mat-icon {
-        font-size: 18px;
-      }
+             .duration-preview mat-icon {
+         font-size: 18px;
+       }
 
-     
-  `]
+       .toxicity-slider-section {
+         margin-bottom: 16px;
+       }
+
+       .slider-header {
+         display: flex;
+         align-items: center;
+         justify-content: space-between;
+         margin-bottom: 8px;
+       }
+
+       .slider-label {
+         font-weight: 500;
+         color: #333;
+         margin: 0;
+       }
+
+       .sensitivity-level {
+         font-size: 12px;
+         font-weight: 500;
+         padding: 4px 8px;
+         border-radius: 12px;
+         text-transform: uppercase;
+       }
+
+       .sensitivity-level.low {
+         background-color: #ffebee;
+         color: #c62828;
+       }
+
+       .sensitivity-level.mild {
+         background-color: #fff3e0;
+         color: #f57c00;
+       }
+
+       .sensitivity-level.high {
+         background-color: #e8f5e8;
+         color: #2e7d32;
+       }
+
+       .slider-container {
+         display: flex;
+         align-items: center;
+         gap: 16px;
+         margin-bottom: 8px;
+       }
+
+       .toxicity-slider {
+         flex: 1;
+         height: 6px;
+         border-radius: 3px;
+         background: #e0e0e0;
+         outline: none;
+         -webkit-appearance: none;
+         appearance: none;
+       }
+
+       .toxicity-slider::-webkit-slider-thumb {
+         -webkit-appearance: none;
+         appearance: none;
+         width: 20px;
+         height: 20px;
+         border-radius: 50%;
+         background: #1976d2;
+         cursor: pointer;
+         border: 2px solid white;
+         box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+       }
+
+       .toxicity-slider::-moz-range-thumb {
+         width: 20px;
+         height: 20px;
+         border-radius: 50%;
+         background: #1976d2;
+         cursor: pointer;
+         border: 2px solid white;
+         box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+         border: none;
+       }
+
+       .slider-value {
+         min-width: 40px;
+         text-align: center;
+         font-weight: 500;
+         color: #1976d2;
+       }
+
+       .slider-help-text {
+         color: #666;
+         font-size: 14px;
+         margin-top: 4px;
+       }
+      
+   `]
 })
 export class NodeEditorComponent implements OnInit {
   nodeForm: FormGroup;
@@ -534,6 +646,7 @@ export class NodeEditorComponent implements OnInit {
       content: [''],
       conditionType: ['contains'],
       conditionValue: [''],
+      toxicity_sensitivity: [0.5], // New field for toxicity sensitivity
       actionType: ['set_variable'],
       variableName: [''],
       variableValue: [''],
@@ -569,6 +682,7 @@ export class NodeEditorComponent implements OnInit {
       content: data.content || '',
       conditionType: data.condition_type || 'contains',
       conditionValue: data.condition_value || '',
+              toxicity_sensitivity: data.toxicity_sensitivity ?? 0.5, // Load toxicity sensitivity
       actionType: data.action_type || 'set_variable',
       variableName: '', // will be set below if action_params exists
       variableValue: '', // will be set below if action_params exists
@@ -585,6 +699,25 @@ export class NodeEditorComponent implements OnInit {
        customDurationUnit: data.custom_duration_unit || 'hours', // Load custom duration unit
        revokeMessages: data.revoke_messages || false // Load revokeMessages
     });
+
+    // If condition type is toxicity, ensure toxicity_sensitivity is properly set
+    if (data.condition_type === 'toxicity') {
+      // Preserve existing toxicity_sensitivity if it exists, otherwise use default
+      const existingToxicitySensitivity = data.toxicity_sensitivity;
+      if (existingToxicitySensitivity !== null && existingToxicitySensitivity !== undefined) {
+        this.nodeForm.patchValue({
+          toxicity_sensitivity: existingToxicitySensitivity
+        });
+      } else {
+        // Set default only if no existing value
+        this.nodeForm.patchValue({
+          toxicity_sensitivity: 0.5
+        });
+      }
+      
+      // Update this.data to reflect the toxicity condition type
+      this.updateDataForToxicityCondition();
+    }
 
     // If this is an action node with action_params, parse and set variableName/variableValue
     if (data.type === 'action' && data.action_type === 'set_variable' && data.action_params) {
@@ -678,7 +811,8 @@ export class NodeEditorComponent implements OnInit {
     if (type !== 'condition') {
       this.nodeForm.patchValue({
         conditionType: 'contains',
-        conditionValue: ''
+        conditionValue: '',
+        toxicity_sensitivity: 0.5
       });
     }
     
@@ -719,19 +853,41 @@ export class NodeEditorComponent implements OnInit {
     }
   }
 
-  setupConditionValidators() {
-    // Listen for type changes to apply validators dynamically
-    this.nodeForm.get('type')?.valueChanges.subscribe(type => {
-      if (type === 'condition') {
-        this.nodeForm.get('conditionType')?.setValidators([Validators.required]);
-        this.nodeForm.get('conditionValue')?.setValidators([Validators.required]);
-      } else {
-        this.nodeForm.get('conditionType')?.clearValidators();
-        this.nodeForm.get('conditionValue')?.clearValidators();
-      }
-      this.nodeForm.get('conditionType')?.updateValueAndValidity();
-      this.nodeForm.get('conditionValue')?.updateValueAndValidity();
-    });
+     setupConditionValidators() {
+     // Listen for type changes to apply validators dynamically
+     this.nodeForm.get('type')?.valueChanges.subscribe(type => {
+       if (type === 'condition') {
+         this.nodeForm.get('conditionType')?.setValidators([Validators.required]);
+         // Remove required validator for conditionValue - it's now optional
+         this.nodeForm.get('conditionValue')?.clearValidators();
+       } else {
+         this.nodeForm.get('conditionType')?.clearValidators();
+         this.nodeForm.get('conditionValue')?.clearValidators();
+       }
+       this.nodeForm.get('conditionType')?.updateValueAndValidity();
+       this.nodeForm.get('conditionValue')?.updateValueAndValidity();
+     });
+
+     // Listen for condition type changes to set default values and adjust validators
+     this.nodeForm.get('conditionType')?.valueChanges.subscribe(conditionType => {
+       if (conditionType === 'toxicity') {
+         // Only set default toxicity_sensitivity if it's not already set
+         const currentToxicitySensitivity = this.nodeForm.get('toxicity_sensitivity')?.value;
+         if (currentToxicitySensitivity === null || currentToxicitySensitivity === undefined) {
+           this.nodeForm.patchValue({ toxicity_sensitivity: 0.5 });
+         }
+         // For toxicity, we don't need conditionValue, so clear its validators
+         this.nodeForm.get('conditionValue')?.clearValidators();
+         this.nodeForm.get('conditionValue')?.updateValueAndValidity();
+         
+         // Update this.data to reflect the toxicity condition type
+         this.updateDataForToxicityCondition();
+       } else {
+         // For other condition types, conditionValue is now optional
+         this.nodeForm.get('conditionValue')?.clearValidators();
+         this.nodeForm.get('conditionValue')?.updateValueAndValidity();
+       }
+     });
     
     // Listen for action type changes to apply validators for ban_chat_member
     this.nodeForm.get('actionType')?.valueChanges.subscribe(actionType => {
@@ -749,7 +905,8 @@ export class NodeEditorComponent implements OnInit {
     // Also run once on init
     if (this.nodeForm.get('type')?.value === 'condition') {
       this.nodeForm.get('conditionType')?.setValidators([Validators.required]);
-      this.nodeForm.get('conditionValue')?.setValidators([Validators.required]);
+      // conditionValue is optional for all condition types
+      this.nodeForm.get('conditionValue')?.clearValidators();
     } else {
       this.nodeForm.get('conditionType')?.clearValidators();
       this.nodeForm.get('conditionValue')?.clearValidators();
@@ -836,6 +993,10 @@ export class NodeEditorComponent implements OnInit {
           // Always include both fields, even if empty (should be validated)
           nodeData.condition_type = formValue.conditionType;
           nodeData.condition_value = formValue.conditionValue;
+          // Add toxicity_sensitivity for toxicity condition type
+          if (formValue.conditionType === 'toxicity') {
+            nodeData.toxicity_sensitivity = formValue.toxicity_sensitivity;
+          }
           break;
         case 'action':
           nodeData.action_type = formValue.actionType;
@@ -991,19 +1152,49 @@ export class NodeEditorComponent implements OnInit {
     }
   }
 
-  isDurationInvalid(): boolean {
-    if (this.banDuration === 'permanent') {
-      return false;
-    }
-    
-    const value = this.nodeForm.get('customDurationValue')?.value;
-    const unit = this.nodeForm.get('customDurationUnit')?.value;
-    
-    if (!value || !unit) {
-      return false;
-    }
-    
-    const totalMinutes = this.calculateTotalMinutes(value, unit);
-    return totalMinutes < 0.5 || totalMinutes >= 525600;
-  }
+     isDurationInvalid(): boolean {
+     if (this.banDuration === 'permanent') {
+       return false;
+     }
+     
+     const value = this.nodeForm.get('customDurationValue')?.value;
+     const unit = this.nodeForm.get('customDurationUnit')?.value;
+     
+     if (!value || !unit) {
+       return false;
+     }
+     
+     const totalMinutes = this.calculateTotalMinutes(value, unit);
+     return totalMinutes < 0.5 || totalMinutes >= 525600;
+   }
+
+   onToxicitySliderChange(event: any) {
+     const value = event.target.value;
+     // Convert slider value (0-100) to decimal (0.0-1.0)
+     const decimalValue = value / 100;
+     this.nodeForm.patchValue({ toxicity_sensitivity: decimalValue });
+     
+     // Update this.data to reflect the new toxicity sensitivity
+     this.updateDataForToxicityCondition();
+   }
+
+   getSensitivityLevel(): string {
+     const value = this.nodeForm.get('toxicity_sensitivity')?.value ?? 0.5;
+     
+     if (value <= 1/3) {
+       return 'low';
+     } else if (value <= 2/3) {
+       return 'mild';
+     } else {
+       return 'high';
+     }
+   }
+
+   private updateDataForToxicityCondition() {
+     // Update this.data to reflect that this is a toxicity condition
+     if (this.data.node && this.data.node.data) {
+       this.data.node.data.condition_type = 'toxicity';
+       this.data.node.data.toxicity_sensitivity = this.nodeForm.get('toxicity_sensitivity')?.value ?? 0.5;
+     }
+   }
 } 
