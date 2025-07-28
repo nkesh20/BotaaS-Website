@@ -128,14 +128,34 @@ interface NodeData {
                   <mat-option value="email">Is Email</mat-option>
                   <mat-option value="phone_number">Is Phone Number</mat-option>
                   <mat-option value="date">Is Date</mat-option>
+                  <mat-option value="toxicity">Is Toxic</mat-option>
                   <mat-option value="regex">Regular Expression</mat-option>
                 </mat-select>
               </mat-form-field>
-              <mat-form-field appearance="outline" class="full-width">
+              <mat-form-field appearance="outline" class="full-width" *ngIf="nodeForm.get('conditionType')?.value !== 'toxicity'">
                 <mat-label>Condition Value</mat-label>
                 <input matInput formControlName="conditionValue" 
                        placeholder="Enter the value to check against">
               </mat-form-field>
+              
+              <!-- Toxicity Slider -->
+              <div *ngIf="nodeForm.get('conditionType')?.value === 'toxicity'" class="toxicity-slider-section">
+                <div class="slider-header">
+                  <label class="slider-label">Sensitivity</label>
+                  <span class="sensitivity-level" [class]="getSensitivityLevel()">{{ getSensitivityLevel() }}</span>
+                </div>
+                <div class="slider-container">
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="100" 
+                    step="1"
+                    formControlName="conditionValue"
+                    class="toxicity-slider"
+                    (input)="onToxicitySliderChange($event)">
+                  <span class="slider-value">{{ (nodeForm.get('conditionValue')?.value || 50) / 100 | number:'1.2-2' }}</span>
+                </div>
+              </div>
             </div>
 
             <!-- Action Node Settings -->
@@ -510,12 +530,104 @@ interface NodeData {
         color: #e65100;
       }
 
-      .duration-preview mat-icon {
-        font-size: 18px;
-      }
+             .duration-preview mat-icon {
+         font-size: 18px;
+       }
 
-     
-  `]
+       .toxicity-slider-section {
+         margin-bottom: 16px;
+       }
+
+       .slider-header {
+         display: flex;
+         align-items: center;
+         justify-content: space-between;
+         margin-bottom: 8px;
+       }
+
+       .slider-label {
+         font-weight: 500;
+         color: #333;
+         margin: 0;
+       }
+
+       .sensitivity-level {
+         font-size: 12px;
+         font-weight: 500;
+         padding: 4px 8px;
+         border-radius: 12px;
+         text-transform: uppercase;
+       }
+
+       .sensitivity-level.low {
+         background-color: #e8f5e8;
+         color: #2e7d32;
+       }
+
+       .sensitivity-level.mild {
+         background-color: #fff3e0;
+         color: #f57c00;
+       }
+
+       .sensitivity-level.high {
+         background-color: #ffebee;
+         color: #c62828;
+       }
+
+       .slider-container {
+         display: flex;
+         align-items: center;
+         gap: 16px;
+         margin-bottom: 8px;
+       }
+
+       .toxicity-slider {
+         flex: 1;
+         height: 6px;
+         border-radius: 3px;
+         background: #e0e0e0;
+         outline: none;
+         -webkit-appearance: none;
+         appearance: none;
+       }
+
+       .toxicity-slider::-webkit-slider-thumb {
+         -webkit-appearance: none;
+         appearance: none;
+         width: 20px;
+         height: 20px;
+         border-radius: 50%;
+         background: #1976d2;
+         cursor: pointer;
+         border: 2px solid white;
+         box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+       }
+
+       .toxicity-slider::-moz-range-thumb {
+         width: 20px;
+         height: 20px;
+         border-radius: 50%;
+         background: #1976d2;
+         cursor: pointer;
+         border: 2px solid white;
+         box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+         border: none;
+       }
+
+       .slider-value {
+         min-width: 40px;
+         text-align: center;
+         font-weight: 500;
+         color: #1976d2;
+       }
+
+       .slider-help-text {
+         color: #666;
+         font-size: 14px;
+         margin-top: 4px;
+       }
+      
+   `]
 })
 export class NodeEditorComponent implements OnInit {
   nodeForm: FormGroup;
@@ -719,19 +831,26 @@ export class NodeEditorComponent implements OnInit {
     }
   }
 
-  setupConditionValidators() {
-    // Listen for type changes to apply validators dynamically
-    this.nodeForm.get('type')?.valueChanges.subscribe(type => {
-      if (type === 'condition') {
-        this.nodeForm.get('conditionType')?.setValidators([Validators.required]);
-        this.nodeForm.get('conditionValue')?.setValidators([Validators.required]);
-      } else {
-        this.nodeForm.get('conditionType')?.clearValidators();
-        this.nodeForm.get('conditionValue')?.clearValidators();
-      }
-      this.nodeForm.get('conditionType')?.updateValueAndValidity();
-      this.nodeForm.get('conditionValue')?.updateValueAndValidity();
-    });
+     setupConditionValidators() {
+     // Listen for type changes to apply validators dynamically
+     this.nodeForm.get('type')?.valueChanges.subscribe(type => {
+       if (type === 'condition') {
+         this.nodeForm.get('conditionType')?.setValidators([Validators.required]);
+         this.nodeForm.get('conditionValue')?.setValidators([Validators.required]);
+       } else {
+         this.nodeForm.get('conditionType')?.clearValidators();
+         this.nodeForm.get('conditionValue')?.clearValidators();
+       }
+       this.nodeForm.get('conditionType')?.updateValueAndValidity();
+       this.nodeForm.get('conditionValue')?.updateValueAndValidity();
+     });
+
+     // Listen for condition type changes to set default values
+     this.nodeForm.get('conditionType')?.valueChanges.subscribe(conditionType => {
+       if (conditionType === 'toxicity') {
+         this.nodeForm.patchValue({ conditionValue: '50' });
+       }
+     });
     
     // Listen for action type changes to apply validators for ban_chat_member
     this.nodeForm.get('actionType')?.valueChanges.subscribe(actionType => {
@@ -991,19 +1110,37 @@ export class NodeEditorComponent implements OnInit {
     }
   }
 
-  isDurationInvalid(): boolean {
-    if (this.banDuration === 'permanent') {
-      return false;
-    }
-    
-    const value = this.nodeForm.get('customDurationValue')?.value;
-    const unit = this.nodeForm.get('customDurationUnit')?.value;
-    
-    if (!value || !unit) {
-      return false;
-    }
-    
-    const totalMinutes = this.calculateTotalMinutes(value, unit);
-    return totalMinutes < 0.5 || totalMinutes >= 525600;
-  }
+     isDurationInvalid(): boolean {
+     if (this.banDuration === 'permanent') {
+       return false;
+     }
+     
+     const value = this.nodeForm.get('customDurationValue')?.value;
+     const unit = this.nodeForm.get('customDurationUnit')?.value;
+     
+     if (!value || !unit) {
+       return false;
+     }
+     
+     const totalMinutes = this.calculateTotalMinutes(value, unit);
+     return totalMinutes < 0.5 || totalMinutes >= 525600;
+   }
+
+   onToxicitySliderChange(event: any) {
+     const value = event.target.value;
+     this.nodeForm.patchValue({ conditionValue: value });
+   }
+
+   getSensitivityLevel(): string {
+     const value = this.nodeForm.get('conditionValue')?.value || 50;
+     const decimalValue = value / 100;
+     
+     if (decimalValue <= 1/3) {
+       return 'low';
+     } else if (decimalValue <= 2/3) {
+       return 'mild';
+     } else {
+       return 'high';
+     }
+   }
 } 
