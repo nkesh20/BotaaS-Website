@@ -150,10 +150,10 @@ interface NodeData {
                     min="0" 
                     max="100" 
                     step="1"
-                    [value]="(nodeForm.get('toxicity_sensitivity')?.value || 0.5) * 100"
+                    [value]="(nodeForm.get('toxicity_sensitivity')?.value ?? 0.5) * 100"
                     class="toxicity-slider"
                     (input)="onToxicitySliderChange($event)">
-                  <span class="slider-value">{{ (nodeForm.get('toxicity_sensitivity')?.value || 0.5) | number:'1.2-2' }}</span>
+                  <span class="slider-value">{{ (nodeForm.get('toxicity_sensitivity')?.value ?? 0.5) | number:'1.2-2' }}</span>
                 </div>
               </div>
             </div>
@@ -560,8 +560,8 @@ interface NodeData {
        }
 
        .sensitivity-level.low {
-         background-color: #e8f5e8;
-         color: #2e7d32;
+         background-color: #ffebee;
+         color: #c62828;
        }
 
        .sensitivity-level.mild {
@@ -570,8 +570,8 @@ interface NodeData {
        }
 
        .sensitivity-level.high {
-         background-color: #ffebee;
-         color: #c62828;
+         background-color: #e8f5e8;
+         color: #2e7d32;
        }
 
        .slider-container {
@@ -682,7 +682,7 @@ export class NodeEditorComponent implements OnInit {
       content: data.content || '',
       conditionType: data.condition_type || 'contains',
       conditionValue: data.condition_value || '',
-      toxicity_sensitivity: data.toxicity_sensitivity || 0.5, // Load toxicity sensitivity
+              toxicity_sensitivity: data.toxicity_sensitivity ?? 0.5, // Load toxicity sensitivity
       actionType: data.action_type || 'set_variable',
       variableName: '', // will be set below if action_params exists
       variableValue: '', // will be set below if action_params exists
@@ -1179,7 +1179,7 @@ export class NodeEditorComponent implements OnInit {
    }
 
    getSensitivityLevel(): string {
-     const value = this.nodeForm.get('toxicity_sensitivity')?.value || 0.5;
+     const value = this.nodeForm.get('toxicity_sensitivity')?.value ?? 0.5;
      
      if (value <= 1/3) {
        return 'low';
@@ -1194,7 +1194,7 @@ export class NodeEditorComponent implements OnInit {
      // Update this.data to reflect that this is a toxicity condition
      if (this.data.node && this.data.node.data) {
        this.data.node.data.condition_type = 'toxicity';
-       this.data.node.data.toxicity_sensitivity = this.nodeForm.get('toxicity_sensitivity')?.value || 0.5;
+       this.data.node.data.toxicity_sensitivity = this.nodeForm.get('toxicity_sensitivity')?.value ?? 0.5;
      }
    }
 } 
