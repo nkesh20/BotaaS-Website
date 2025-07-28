@@ -150,10 +150,10 @@ interface NodeData {
                     min="0" 
                     max="100" 
                     step="1"
-                    formControlName="conditionValue"
+                    [value]="(nodeForm.get('toxicity_sensitivity')?.value || 0.5) * 100"
                     class="toxicity-slider"
                     (input)="onToxicitySliderChange($event)">
-                  <span class="slider-value">{{ (nodeForm.get('conditionValue')?.value || 50) / 100 | number:'1.2-2' }}</span>
+                  <span class="slider-value">{{ (nodeForm.get('toxicity_sensitivity')?.value || 0.5) | number:'1.2-2' }}</span>
                 </div>
               </div>
             </div>
@@ -646,6 +646,7 @@ export class NodeEditorComponent implements OnInit {
       content: [''],
       conditionType: ['contains'],
       conditionValue: [''],
+      toxicity_sensitivity: [0.5], // New field for toxicity sensitivity
       actionType: ['set_variable'],
       variableName: [''],
       variableValue: [''],
@@ -681,6 +682,7 @@ export class NodeEditorComponent implements OnInit {
       content: data.content || '',
       conditionType: data.condition_type || 'contains',
       conditionValue: data.condition_value || '',
+      toxicity_sensitivity: data.toxicity_sensitivity || 0.5, // Load toxicity sensitivity
       actionType: data.action_type || 'set_variable',
       variableName: '', // will be set below if action_params exists
       variableValue: '', // will be set below if action_params exists
@@ -697,6 +699,13 @@ export class NodeEditorComponent implements OnInit {
        customDurationUnit: data.custom_duration_unit || 'hours', // Load custom duration unit
        revokeMessages: data.revoke_messages || false // Load revokeMessages
     });
+
+    // If condition type is toxicity, ensure toxicity_sensitivity is properly set
+    if (data.condition_type === 'toxicity') {
+      this.nodeForm.patchValue({
+        toxicity_sensitivity: data.toxicity_sensitivity || 0.5
+      });
+    }
 
     // If this is an action node with action_params, parse and set variableName/variableValue
     if (data.type === 'action' && data.action_type === 'set_variable' && data.action_params) {
@@ -790,7 +799,8 @@ export class NodeEditorComponent implements OnInit {
     if (type !== 'condition') {
       this.nodeForm.patchValue({
         conditionType: 'contains',
-        conditionValue: ''
+        conditionValue: '',
+        toxicity_sensitivity: 0.5
       });
     }
     
@@ -845,10 +855,17 @@ export class NodeEditorComponent implements OnInit {
        this.nodeForm.get('conditionValue')?.updateValueAndValidity();
      });
 
-     // Listen for condition type changes to set default values
+     // Listen for condition type changes to set default values and adjust validators
      this.nodeForm.get('conditionType')?.valueChanges.subscribe(conditionType => {
        if (conditionType === 'toxicity') {
-         this.nodeForm.patchValue({ conditionValue: '50' });
+         this.nodeForm.patchValue({ toxicity_sensitivity: 0.5 });
+         // For toxicity, we don't need conditionValue, so clear its validators
+         this.nodeForm.get('conditionValue')?.clearValidators();
+         this.nodeForm.get('conditionValue')?.updateValueAndValidity();
+       } else {
+         // For other condition types, require conditionValue
+         this.nodeForm.get('conditionValue')?.setValidators([Validators.required]);
+         this.nodeForm.get('conditionValue')?.updateValueAndValidity();
        }
      });
     
@@ -868,7 +885,14 @@ export class NodeEditorComponent implements OnInit {
     // Also run once on init
     if (this.nodeForm.get('type')?.value === 'condition') {
       this.nodeForm.get('conditionType')?.setValidators([Validators.required]);
-      this.nodeForm.get('conditionValue')?.setValidators([Validators.required]);
+      
+      // Check if condition type is toxicity to set appropriate validators
+      const conditionType = this.nodeForm.get('conditionType')?.value;
+      if (conditionType === 'toxicity') {
+        this.nodeForm.get('conditionValue')?.clearValidators();
+      } else {
+        this.nodeForm.get('conditionValue')?.setValidators([Validators.required]);
+      }
     } else {
       this.nodeForm.get('conditionType')?.clearValidators();
       this.nodeForm.get('conditionValue')?.clearValidators();
@@ -955,6 +979,10 @@ export class NodeEditorComponent implements OnInit {
           // Always include both fields, even if empty (should be validated)
           nodeData.condition_type = formValue.conditionType;
           nodeData.condition_value = formValue.conditionValue;
+          // Add toxicity_sensitivity for toxicity condition type
+          if (formValue.conditionType === 'toxicity') {
+            nodeData.toxicity_sensitivity = formValue.toxicity_sensitivity;
+          }
           break;
         case 'action':
           nodeData.action_type = formValue.actionType;
@@ -1128,16 +1156,17 @@ export class NodeEditorComponent implements OnInit {
 
    onToxicitySliderChange(event: any) {
      const value = event.target.value;
-     this.nodeForm.patchValue({ conditionValue: value });
+     // Convert slider value (0-100) to decimal (0.0-1.0)
+     const decimalValue = value / 100;
+     this.nodeForm.patchValue({ toxicity_sensitivity: decimalValue });
    }
 
    getSensitivityLevel(): string {
-     const value = this.nodeForm.get('conditionValue')?.value || 50;
-     const decimalValue = value / 100;
+     const value = this.nodeForm.get('toxicity_sensitivity')?.value || 0.5;
      
-     if (decimalValue <= 1/3) {
+     if (value <= 1/3) {
        return 'low';
-     } else if (decimalValue <= 2/3) {
+     } else if (value <= 2/3) {
        return 'mild';
      } else {
        return 'high';
